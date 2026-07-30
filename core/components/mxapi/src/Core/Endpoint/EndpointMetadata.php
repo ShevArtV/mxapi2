@@ -110,6 +110,23 @@ class EndpointMetadata
     }
 
     /**
+     * Маршрут в публичном виде: без шаблонов роутера и необязательных частей.
+     *
+     * `/ms2/orders/{id:\d+}` → `/ms2/orders/{id}`. Внешнему клиенту и OpenAPI
+     * регулярные выражения FastRoute не нужны — это деталь реализации роутинга.
+     *
+     * @return string
+     */
+    public function getPublicPath()
+    {
+        $path = str_replace(array('[', ']'), '', $this->spec['path']);
+
+        // Шаблон вида {id:\d+}; выражения с фигурными скобками ({id:[0-9]{2}})
+        // в маршрутах пакета не используются.
+        return preg_replace('/\{(\w+)\s*:[^}]+\}/', '{$1}', $path);
+    }
+
+    /**
      * @return array
      */
     public function getMethods()
@@ -258,6 +275,9 @@ class EndpointMetadata
         foreach (self::$internalKeys as $key) {
             unset($spec[$key]);
         }
+
+        // Наружу — маршрут без шаблонов роутера.
+        $spec['path'] = $this->getPublicPath();
 
         return $spec;
     }

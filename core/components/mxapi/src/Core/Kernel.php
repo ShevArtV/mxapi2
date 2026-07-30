@@ -253,7 +253,10 @@ class Kernel
 
         $requested = trim($request->getHeader('x-mxapi-context'));
         if ($requested === '') {
-            $requested = trim((string)$request->getParam('context', ''));
+            // Именно mxapi_context, а не context: у процессора заказов miniShop2
+            // свойство `context` уже занято фильтром по контексту самого заказа
+            // (msOrder.context), и совпадение имён путало бы оба смысла.
+            $requested = trim((string)$request->getParam('mxapi_context', ''));
         }
 
         if ($requested === '') {

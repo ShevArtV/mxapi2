@@ -74,7 +74,7 @@ class OpenApiGenerator
 
         foreach ($this->registry->publicOnly() as $endpoint) {
             $metadata = $endpoint->getMetadata();
-            $path = $this->normalizePath($metadata->getPath());
+            $path = $metadata->getPublicPath();
 
             foreach ($metadata->getMethods() as $method) {
                 $paths[$path][strtolower($method)] = $this->buildOperation($metadata, $method);
@@ -321,20 +321,6 @@ class OpenApiGenerator
         }
 
         return $schema;
-    }
-
-    /**
-     * FastRoute допускает шаблоны и необязательные части — OpenAPI нет.
-     * `/demo/items[/{id:\d+}]` превращается в `/demo/items/{id}`.
-     *
-     * @param string $path
-     * @return string
-     */
-    private function normalizePath($path)
-    {
-        $path = str_replace(array('[', ']'), '', $path);
-
-        return preg_replace('/\{(\w+)\s*:[^}]+\}/', '{$1}', $path);
     }
 
     /**

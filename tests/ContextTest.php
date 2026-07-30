@@ -132,6 +132,25 @@ class ContextTest extends TestCase
         $this->assertSame('web', $response->getPayload()['data']['context']);
     }
 
+    public function testRequestContextAcceptsQueryParameter()
+    {
+        $this->kernel = $this->makeKernel(array('allow_request_context' => true));
+        $token = $this->issueToken('req.read');
+
+        // Имя параметра — mxapi_context: `context` занят фильтром заказов ms2.
+        $response = $this->kernel->handle(new Request(
+            'GET',
+            '/req/items',
+            array('mxapi_context' => 'web', 'context' => 'shop'),
+            array(),
+            array('authorization' => 'Bearer ' . $token),
+            '127.0.0.1'
+        ));
+
+        $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
+        $this->assertSame('web', $response->getPayload()['data']['context']);
+    }
+
     public function testRequestContextFallsBackToDefault()
     {
         $this->kernel = $this->makeKernel(array('allow_request_context' => true));
