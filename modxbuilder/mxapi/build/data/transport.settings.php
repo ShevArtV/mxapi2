@@ -29,10 +29,10 @@ $definitions = array(
     'mxapi.rate_limit_per_minute' => array('value' => '120',          'xtype' => 'numberfield', 'area' => 'mxapi_limits'),
     // Доверенные прокси: только для них учитывается X-Forwarded-For при определении IP клиента.
     'mxapi.trusted_proxies'       => array('value' => '',             'xtype' => 'textfield', 'area' => 'mxapi_access'),
-    // Классы провайдеров эндпоинтов через запятую (пакеты регистрируются здесь либо на событии mxApiOnRegisterEndpoints).
-    'mxapi.providers'             => array('value' => '',             'xtype' => 'textarea', 'area' => 'mxapi'),
-    // Дополнительные промежуточные обработчики запроса (MxApi\Core\Middleware\MiddlewareInterface) через запятую.
-    'mxapi.middleware'            => array('value' => '',             'xtype' => 'textarea', 'area' => 'mxapi'),
+    // Провайдеров и промежуточные обработчики в настройках нет намеренно: класс —
+    // это код, и его состав не должен зависеть от дампа базы. Пакет регистрирует
+    // провайдера событием mxApiOnRegisterEndpoints, сайт — ключами providers и
+    // middleware в core/config/mxapi.php.
     // Что показывать в каталоге эндпоинтов и OpenAPI: all — весь публичный
     // контракт, scope — только вызываемое предъявленным токеном, permission —
     // только то, на что у пользователя есть право MODX. Дефолт all: каталог

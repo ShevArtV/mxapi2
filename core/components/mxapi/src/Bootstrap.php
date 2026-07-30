@@ -39,6 +39,10 @@ class Bootstrap
     /**
      * Конфигурация: умолчания → системные настройки MODX → файл сайта.
      *
+     * Провайдеры и промежуточные обработчики читаются только из файла сайта и
+     * события mxApiOnRegisterEndpoints: имя класса в системной настройке значило
+     * бы, что состав API живёт в базе и разъезжается с кодом при переносе дампа.
+     *
      * @param \modX $modx
      * @return Config
      */
@@ -54,8 +58,6 @@ class Bootstrap
             'max_limit' => (int)$modx->getOption('mxapi.max_limit', null, 1000),
             'rate_limit_per_minute' => (int)$modx->getOption('mxapi.rate_limit_per_minute', null, 120),
             'trusted_proxies' => $modx->getOption('mxapi.trusted_proxies', null, ''),
-            'providers' => $modx->getOption('mxapi.providers', null, ''),
-            'middleware' => $modx->getOption('mxapi.middleware', null, ''),
             'catalog_filter' => $modx->getOption('mxapi.catalog_filter', null, 'all'),
             'log_reads' => (bool)$modx->getOption('mxapi.log_reads', null, false),
             'log_lifetime' => (int)$modx->getOption('mxapi.log_lifetime', null, 2592000),
