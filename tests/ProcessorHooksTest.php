@@ -35,7 +35,7 @@ class ProcessorHooksTest extends TestCase
     {
         $endpoint = new HookedProcessorEndpoint();
 
-        $endpoint->handle(new Request('GET', '/hooked', array('limit' => '5')), $this->context);
+        $endpoint->handle(new Request('GET', '/hooked', ['limit' => '5']), $this->context);
 
         $this->assertSame('mgr/demo/getlist', $this->platform->lastProcessor);
         $this->assertArrayHasKey('injected', $this->platform->lastProcessorProperties);
@@ -48,7 +48,7 @@ class ProcessorHooksTest extends TestCase
         // Хук обязан видеть тот контекст, в котором реально шёл вызов.
         $this->platform->useContext('web');
 
-        $response = $endpoint->handle(new Request('GET', '/hooked', array('limit' => '5')), $this->context);
+        $response = $endpoint->handle(new Request('GET', '/hooked', ['limit' => '5']), $this->context);
         $payload = $response->getPayload();
 
         $this->assertTrue($payload['success']);
@@ -77,15 +77,15 @@ class HookedProcessorEndpoint extends ProcessorEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'demo.hooked',
             'path' => '/hooked',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'processor' => 'mgr/demo/getlist',
-            'parameters' => array(
-                array('name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 10),
-            ),
-        );
+            'parameters' => [
+                ['name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 10],
+            ],
+        ];
     }
 
     protected function beforeRun(array &$properties, EndpointContext $context)
@@ -115,14 +115,14 @@ class PlainProcessorEndpoint extends ProcessorEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'demo.plain',
             'path' => '/plain',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'processor' => 'mgr/demo/getlist',
-            'parameters' => array(
-                array('name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 10),
-            ),
-        );
+            'parameters' => [
+                ['name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 10],
+            ],
+        ];
     }
 }

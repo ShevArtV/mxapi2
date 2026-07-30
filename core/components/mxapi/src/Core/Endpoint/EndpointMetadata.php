@@ -32,25 +32,25 @@ class EndpointMetadata
      *
      * @var array
      */
-    private static $internalKeys = array('processor', 'processors_path', 'field_map', 'properties');
+    private static $internalKeys = ['processor', 'processors_path', 'field_map', 'properties'];
 
     /** @var array */
     private $spec;
 
     /** @var ParameterMetadata[] */
-    private $parameters = array();
+    private $parameters = [];
 
     /**
      * @param array $spec
      */
     public function __construct(array $spec)
     {
-        $this->spec = array_merge(array(
+        $this->spec = array_merge([
             'id' => '',
             'title' => '',
             'description' => '',
             'path' => '/',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => '',
             'permission' => '',
             'provider' => 'mxapi.core',
@@ -62,11 +62,11 @@ class EndpointMetadata
             'auth' => self::AUTH_BEARER,
             'write' => false,
             'deprecated' => false,
-            'parameters' => array(),
+            'parameters' => [],
             'request_example' => null,
             'response_example' => null,
             'response_description' => '',
-        ), $spec);
+        ], $spec);
 
         $this->spec['methods'] = array_map('strtoupper', (array)$this->spec['methods']);
 
@@ -119,7 +119,7 @@ class EndpointMetadata
      */
     public function getPublicPath()
     {
-        $path = str_replace(array('[', ']'), '', $this->spec['path']);
+        $path = str_replace(['[', ']'], '', $this->spec['path']);
 
         // Шаблон вида {id:\d+}; выражения с фигурными скобками ({id:[0-9]{2}})
         // в маршрутах пакета не используются.
@@ -256,7 +256,7 @@ class EndpointMetadata
     public function toArray()
     {
         $spec = $this->spec;
-        $spec['parameters'] = array();
+        $spec['parameters'] = [];
         foreach ($this->parameters as $parameter) {
             $spec['parameters'][] = $parameter->toArray();
         }

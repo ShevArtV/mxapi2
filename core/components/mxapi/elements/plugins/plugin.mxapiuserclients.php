@@ -44,10 +44,10 @@ $assetsPath = $modx->getOption('mxapi.assets_path', null, MODX_ASSETS_PATH . 'co
 
 $modx->lexicon->load('mxapi:default');
 
-$config = array(
+$config = [
     'connector_url' => $assetsUrl . 'connector.php',
     'user_id' => $userId,
-);
+];
 
 $modx->controller->addHtml(
     '<script>'

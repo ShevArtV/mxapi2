@@ -20,10 +20,10 @@ class mxApiClientRegenerateProcessor extends mxApiClientBaseProcessor
         }
 
         $secret = \MxApi\Core\Auth\ClientSecret::generateSecret();
-        $client->fromArray(array(
+        $client->fromArray([
             'secret_hash' => \MxApi\Core\Auth\ClientSecret::hash($secret),
             'editedon' => time(),
-        ));
+        ]);
 
         if (!$client->save()) {
             return $this->failure($this->modx->lexicon('mxapi_client_err_save'));

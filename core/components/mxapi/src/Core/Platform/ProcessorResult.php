@@ -22,7 +22,7 @@ class ProcessorResult
     /** @var array */
     private $errors;
 
-    public function __construct($success, array $payload = array(), $message = '', array $errors = array())
+    public function __construct($success, array $payload = [], $message = '', array $errors = [])
     {
         $this->success = (bool)$success;
         $this->payload = $payload;
@@ -76,7 +76,7 @@ class ProcessorResult
      */
     public function getObject()
     {
-        return $this->hasObject() ? $this->payload['object'] : array();
+        return $this->hasObject() ? $this->payload['object'] : [];
     }
 
     /**
@@ -92,7 +92,7 @@ class ProcessorResult
      */
     public function getResults()
     {
-        return $this->isList() ? $this->payload['results'] : array();
+        return $this->isList() ? $this->payload['results'] : [];
     }
 
     /**

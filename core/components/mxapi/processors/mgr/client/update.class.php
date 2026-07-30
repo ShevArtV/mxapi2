@@ -19,7 +19,7 @@ class mxApiClientUpdateProcessor extends mxApiClientBaseProcessor
             return $this->failure($this->modx->lexicon('mxapi_client_err_nf'));
         }
 
-        $data = array('editedon' => time());
+        $data = ['editedon' => time()];
 
         if ($this->getProperty('name', null) !== null) {
             $name = trim((string)$this->getProperty('name'));

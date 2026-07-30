@@ -16,7 +16,7 @@ if ($transport->xpdo) {
     /** @var modX $modx */
     $modx =& $transport->xpdo;
 
-    $areas = array(
+    $areas = [
         'mxapi.enabled' => 'mxapi',
         'mxapi.route_prefix' => 'mxapi',
         'mxapi.context' => 'mxapi_access',
@@ -31,7 +31,7 @@ if ($transport->xpdo) {
         'mxapi.log_reads' => 'mxapi_log',
         'mxapi.log_lifetime' => 'mxapi_log',
         'mxapi.debug' => 'mxapi_log',
-    );
+    ];
 
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
@@ -39,7 +39,7 @@ if ($transport->xpdo) {
             $changed = 0;
             foreach ($areas as $key => $area) {
                 /** @var modSystemSetting $setting */
-                $setting = $modx->getObject('modSystemSetting', array('key' => $key));
+                $setting = $modx->getObject('modSystemSetting', ['key' => $key]);
                 if (!$setting || $setting->get('area') === $area) {
                     continue;
                 }
@@ -68,7 +68,7 @@ if ($transport->xpdo) {
                 $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Настройки: областей обновлено ' . $changed
                     . ', удалено устаревших ' . (int)$obsolete
                     . ', без ключа ' . (int)$orphans . '.');
-                $modx->getCacheManager()->refresh(array('system_settings' => array()));
+                $modx->getCacheManager()->refresh(['system_settings' => []]);
             }
             break;
 

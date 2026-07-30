@@ -26,7 +26,7 @@ $_lang['area_mxapi_limits'] = 'mxApi: limits and paging';
 $_lang['area_mxapi_log'] = 'mxApi: journal and debug';
 
 $_lang['setting_mxapi.enabled'] = 'API enabled';
-$_lang['setting_mxapi.enabled_desc'] = 'Master switch: when off, the entry point answers 503 to everything but meta endpoints.';
+$_lang['setting_mxapi.enabled_desc'] = 'Master switch: when off, the entry point answers 503 to any request, including the endpoint catalog.';
 $_lang['setting_mxapi.route_prefix'] = 'Route prefix';
 $_lang['setting_mxapi.route_prefix_desc'] = 'Public prefix for API routes, /mxapi/v1 by default. Project aliases go to core/config/mxapi.php.';
 $_lang['setting_mxapi.context'] = 'Default context';

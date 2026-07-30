@@ -15,7 +15,7 @@ class CoreIsPlatformAgnosticTest extends TestCase
 {
     public function testCoreHasNoModxReferences()
     {
-        $violations = array();
+        $violations = [];
 
         foreach ($this->coreFiles() as $file) {
             foreach ($this->codeTokens($file) as $line => $code) {
@@ -26,7 +26,7 @@ class CoreIsPlatformAgnosticTest extends TestCase
         }
 
         $this->assertSame(
-            array(),
+            [],
             $violations,
             "MxApi\\Core обращается к MODX — порт на MODX 3 сломается:\n" . implode("\n", $violations)
         );
@@ -38,7 +38,7 @@ class CoreIsPlatformAgnosticTest extends TestCase
     private function coreFiles()
     {
         $directory = new \RecursiveDirectoryIterator(__DIR__ . '/../core/components/mxapi/src/Core');
-        $files = array();
+        $files = [];
 
         foreach (new \RecursiveIteratorIterator($directory) as $file) {
             if ($file->isFile() && $file->getExtension() === 'php') {
@@ -59,7 +59,7 @@ class CoreIsPlatformAgnosticTest extends TestCase
      */
     private function codeTokens($file)
     {
-        $lines = array();
+        $lines = [];
 
         foreach (token_get_all(file_get_contents($file)) as $token) {
             if (!is_array($token)) {
@@ -67,7 +67,7 @@ class CoreIsPlatformAgnosticTest extends TestCase
             }
 
             list($id, $text, $line) = $token;
-            if (in_array($id, array(T_COMMENT, T_DOC_COMMENT, T_INLINE_HTML), true)) {
+            if (in_array($id, [T_COMMENT, T_DOC_COMMENT, T_INLINE_HTML], true)) {
                 continue;
             }
 

@@ -29,7 +29,7 @@ $_lang['area_mxapi_limits'] = 'mxApi: лимиты и пагинация';
 $_lang['area_mxapi_log'] = 'mxApi: журнал и отладка';
 
 $_lang['setting_mxapi.enabled'] = 'API включён';
-$_lang['setting_mxapi.enabled_desc'] = 'Рубильник: при «Нет» точка входа отвечает 503 на всё, кроме мета-эндпоинтов.';
+$_lang['setting_mxapi.enabled_desc'] = 'Рубильник: при «Нет» точка входа отвечает 503 на любой запрос, включая каталог эндпоинтов.';
 $_lang['setting_mxapi.route_prefix'] = 'Префикс маршрутов';
 $_lang['setting_mxapi.route_prefix_desc'] = 'Публичный префикс публичных маршрутов, по умолчанию /mxapi/v1. Проектные алиасы задаются в core/config/mxapi.php.';
 $_lang['setting_mxapi.context'] = 'Контекст по умолчанию';

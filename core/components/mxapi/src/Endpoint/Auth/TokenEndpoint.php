@@ -36,74 +36,74 @@ class TokenEndpoint extends AbstractEndpoint
      */
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'auth.token',
             'title' => 'Выпуск токена',
             'description' => 'Возвращает bearer-токен для дальнейших запросов. '
                 . 'grant_type=password — по логину и паролю пользователя MODX; '
                 . 'grant_type=client_credentials — по паре client_id/client_secret.',
             'path' => '/auth/token',
-            'methods' => array('POST'),
+            'methods' => ['POST'],
             'scope' => '',
             'permission' => '',
             'auth' => EndpointMetadata::AUTH_NONE,
             'write' => true,
-            'parameters' => array(
-                array(
+            'parameters' => [
+                [
                     'name' => 'grant_type',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'required' => false,
                     'default' => self::GRANT_PASSWORD,
-                    'enum' => array(self::GRANT_PASSWORD, self::GRANT_CLIENT),
+                    'enum' => [self::GRANT_PASSWORD, self::GRANT_CLIENT],
                     'description' => 'Способ аутентификации.',
-                ),
-                array(
+                ],
+                [
                     'name' => 'username',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'description' => 'Логин пользователя MODX (grant_type=password).',
-                ),
-                array(
+                ],
+                [
                     'name' => 'password',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'description' => 'Пароль пользователя MODX (grant_type=password).',
-                ),
-                array(
+                ],
+                [
                     'name' => 'client_id',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'description' => 'Идентификатор клиента (grant_type=client_credentials).',
-                ),
-                array(
+                ],
+                [
                     'name' => 'client_secret',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'description' => 'Секрет клиента (grant_type=client_credentials).',
-                ),
-                array(
+                ],
+                [
                     'name' => 'scope',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'required' => true,
                     'description' => 'Запрашиваемые scope через пробел.',
                     'example' => 'orders.export',
-                ),
-            ),
+                ],
+            ],
             'response_description' => 'access_token, token_type, expires_in, expires_at, scope, user. '
                 . 'expires_in = 0 и expires_at = null означают бессрочный токен: '
                 . 'такой выдаётся клиенту, которому это разрешено явно.',
-            'response_example' => array(
+            'response_example' => [
                 'success' => true,
-                'data' => array(
+                'data' => [
                     'access_token' => 'DfT2…',
                     'token_type' => 'Bearer',
                     'expires_in' => 86400,
                     'scope' => 'orders.export',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
     /**

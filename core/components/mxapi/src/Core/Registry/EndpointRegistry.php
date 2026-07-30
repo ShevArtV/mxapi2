@@ -15,7 +15,7 @@ use MxApi\Core\Endpoint\EndpointInterface;
 class EndpointRegistry
 {
     /** @var EndpointInterface[] Ключ — идентификатор эндпоинта. */
-    private $endpoints = array();
+    private $endpoints = [];
 
     /**
      * @param EndpointInterface $endpoint
@@ -69,7 +69,7 @@ class EndpointRegistry
      */
     public function publicOnly()
     {
-        $result = array();
+        $result = [];
         foreach ($this->endpoints as $id => $endpoint) {
             if ($endpoint->getMetadata()->isPublic()) {
                 $result[$id] = $endpoint;

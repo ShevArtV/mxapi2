@@ -26,17 +26,17 @@ class MiddlewareTest extends TestCase
     {
         CounterEndpoint::$calls = 0;
         $this->platform = new FakePlatform();
-        $this->platform->users = array(new PlatformUser(2, 'manager', false, true, false));
-        $this->platform->passwords = array('manager' => 'secret');
-        $this->platform->permissions = array(
+        $this->platform->users = [new PlatformUser(2, 'manager', false, true, false)];
+        $this->platform->passwords = ['manager' => 'secret'];
+        $this->platform->permissions = [
             '2|mxapi_auth_token' => true,
             '2|mxapi_demo_write' => true,
-        );
+        ];
     }
 
     public function testRateLimitBlocksAfterThreshold()
     {
-        $kernel = $this->boot(array('rate_limit_per_minute' => 3));
+        $kernel = $this->boot(['rate_limit_per_minute' => 3]);
         $token = $this->issueToken($kernel);
 
         for ($i = 0; $i < 3; $i++) {
@@ -51,7 +51,7 @@ class MiddlewareTest extends TestCase
 
     public function testRateLimitWindowResets()
     {
-        $kernel = $this->boot(array('rate_limit_per_minute' => 1));
+        $kernel = $this->boot(['rate_limit_per_minute' => 1]);
         $token = $this->issueToken($kernel);
 
         $this->assertSame(200, $this->call($kernel, $token)->getStatus());
@@ -63,7 +63,7 @@ class MiddlewareTest extends TestCase
 
     public function testRateLimitHeadersArePresent()
     {
-        $kernel = $this->boot(array('rate_limit_per_minute' => 10));
+        $kernel = $this->boot(['rate_limit_per_minute' => 10]);
         $token = $this->issueToken($kernel);
 
         $headers = $this->call($kernel, $token)->getHeaders();
@@ -74,7 +74,7 @@ class MiddlewareTest extends TestCase
 
     public function testRateLimitDisabledWhenZero()
     {
-        $kernel = $this->boot(array('rate_limit_per_minute' => 0));
+        $kernel = $this->boot(['rate_limit_per_minute' => 0]);
         $token = $this->issueToken($kernel);
 
         for ($i = 0; $i < 5; $i++) {
@@ -84,14 +84,14 @@ class MiddlewareTest extends TestCase
 
     public function testIdempotentRepeatReturnsStoredResponse()
     {
-        $kernel = $this->boot(array());
+        $kernel = $this->boot([]);
         $token = $this->issueToken($kernel);
 
-        $first = $this->call($kernel, $token, array('idempotency-key' => 'order-42'));
+        $first = $this->call($kernel, $token, ['idempotency-key' => 'order-42']);
         $this->assertSame(200, $first->getStatus());
         $this->assertSame(1, $first->getPayload()['data']['calls']);
 
-        $second = $this->call($kernel, $token, array('idempotency-key' => 'order-42'));
+        $second = $this->call($kernel, $token, ['idempotency-key' => 'order-42']);
 
         $this->assertSame(1, $second->getPayload()['data']['calls'], 'Повтор не должен выполнять операцию заново');
         $this->assertSame('true', $second->getHeaders()['Idempotency-Replayed']);
@@ -99,18 +99,18 @@ class MiddlewareTest extends TestCase
 
     public function testDifferentIdempotencyKeysRunSeparately()
     {
-        $kernel = $this->boot(array());
+        $kernel = $this->boot([]);
         $token = $this->issueToken($kernel);
 
-        $this->call($kernel, $token, array('idempotency-key' => 'a'));
-        $second = $this->call($kernel, $token, array('idempotency-key' => 'b'));
+        $this->call($kernel, $token, ['idempotency-key' => 'a']);
+        $second = $this->call($kernel, $token, ['idempotency-key' => 'b']);
 
         $this->assertSame(2, $second->getPayload()['data']['calls']);
     }
 
     public function testRequestWithoutKeyIsNotReplayed()
     {
-        $kernel = $this->boot(array());
+        $kernel = $this->boot([]);
         $token = $this->issueToken($kernel);
 
         $this->call($kernel, $token);
@@ -121,7 +121,7 @@ class MiddlewareTest extends TestCase
 
     public function testMaintenanceRunsOncePerInterval()
     {
-        $service = new MaintenanceService($this->platform, new Config(array('log_lifetime' => 100)));
+        $service = new MaintenanceService($this->platform, new Config(['log_lifetime' => 100]));
 
         $this->assertTrue($service->runIfDue(), 'Первый прогон должен состояться');
         $this->assertFalse($service->runIfDue(), 'Повторный прогон в том же часе не нужен');
@@ -132,14 +132,14 @@ class MiddlewareTest extends TestCase
 
     public function testMaintenanceRemovesExpiredTokens()
     {
-        $kernel = $this->boot(array('token_ttl' => 60));
+        $kernel = $this->boot(['token_ttl' => 60]);
         $token = $this->issueToken($kernel);
         $this->assertCount(1, $this->platform->tokens);
 
         // Выдача токена сама прогнала уборку, поэтому ждём окончания интервала
         // троттлинга — иначе следующий прогон будет пропущен, и это правильно.
         $this->platform->time += MaintenanceService::INTERVAL_SECONDS + 1;
-        $service = new MaintenanceService($this->platform, new Config(array()));
+        $service = new MaintenanceService($this->platform, new Config([]));
         $this->assertTrue($service->runIfDue());
 
         $this->assertCount(0, $this->platform->tokens, 'Протухший токен должен быть удалён');
@@ -153,32 +153,32 @@ class MiddlewareTest extends TestCase
     private function boot(array $config)
     {
         $kernel = new Kernel($this->platform, new Config($config));
-        $kernel->boot(array(
+        $kernel->boot([
             new TokenEndpoint($kernel->getTokenService()),
             new CounterEndpoint(),
-        ));
+        ]);
 
         return $kernel;
     }
 
     private function issueToken(Kernel $kernel)
     {
-        $response = $kernel->handle(new Request('POST', '/auth/token', array(), array(
+        $response = $kernel->handle(new Request('POST', '/auth/token', [], [
             'username' => 'manager',
             'password' => 'secret',
             'scope' => 'demo.write',
-        ), array(), '127.0.0.1'));
+        ], [], '127.0.0.1'));
 
         $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
 
         return $response->getPayload()['data']['access_token'];
     }
 
-    private function call(Kernel $kernel, $token, array $headers = array())
+    private function call(Kernel $kernel, $token, array $headers = [])
     {
         $headers['authorization'] = 'Bearer ' . $token;
 
-        return $kernel->handle(new Request('POST', '/demo/counter', array(), array(), $headers, '127.0.0.1'));
+        return $kernel->handle(new Request('POST', '/demo/counter', [], [], $headers, '127.0.0.1'));
     }
 }
 
@@ -193,19 +193,19 @@ class CounterEndpoint extends AbstractEndpoint
 
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'demo.counter',
             'title' => 'Счётчик',
             'path' => '/demo/counter',
-            'methods' => array('POST'),
+            'methods' => ['POST'],
             'scope' => 'demo.write',
             'permission' => 'mxapi_demo_write',
             'write' => true,
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array('calls' => ++self::$calls));
+        return Response::success(['calls' => ++self::$calls]);
     }
 }

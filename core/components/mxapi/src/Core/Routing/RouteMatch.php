@@ -15,7 +15,7 @@ class RouteMatch
     /** @var array */
     private $pathParams;
 
-    public function __construct(EndpointInterface $endpoint, array $pathParams = array())
+    public function __construct(EndpointInterface $endpoint, array $pathParams = [])
     {
         $this->endpoint = $endpoint;
         $this->pathParams = $pathParams;

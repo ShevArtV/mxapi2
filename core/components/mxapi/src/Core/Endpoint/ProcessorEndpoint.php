@@ -34,7 +34,7 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
         }
 
         $properties = $this->buildProperties($request, $context);
-        $options = array();
+        $options = [];
         $processorsPath = $metadata->getExtra('processors_path', '');
         if ($processorsPath !== '') {
             $options['processors_path'] = $processorsPath;
@@ -49,7 +49,7 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
                 'processor_error',
                 $result->getMessage(),
                 400,
-                array('errors' => $result->getErrors())
+                ['errors' => $result->getErrors()]
             );
         }
 
@@ -116,16 +116,16 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
             unset($params['offset']);
         }
 
-        $map = $metadata->getExtra('field_map', array());
-        $map = is_array($map) ? $map : array();
+        $map = $metadata->getExtra('field_map', []);
+        $map = is_array($map) ? $map : [];
 
-        $properties = array();
+        $properties = [];
         foreach ($params as $name => $value) {
             $properties[isset($map[$name]) ? $map[$name] : $name] = $value;
         }
 
-        $static = $metadata->getExtra('properties', array());
-        $static = is_array($static) ? $static : array();
+        $static = $metadata->getExtra('properties', []);
+        $static = is_array($static) ? $static : [];
 
         // Фиксированные свойства идут последними: клиент не должен их перебить.
         return array_merge($properties, $static);
@@ -139,11 +139,11 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
     protected function formatResult(ProcessorResult $result, array $properties)
     {
         if ($result->isList()) {
-            $meta = array(
+            $meta = [
                 'total' => $result->getTotal(),
                 'limit' => isset($properties['limit']) ? (int)$properties['limit'] : null,
                 'offset' => isset($properties['start']) ? (int)$properties['start'] : 0,
-            );
+            ];
 
             return Response::success($result->getResults(), array_merge($meta, $this->extraMeta($result->getPayload())));
         }
@@ -164,7 +164,7 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
      */
     protected function extraMeta(array $payload)
     {
-        return array();
+        return [];
     }
 
     /**

@@ -44,7 +44,7 @@ class IdempotencyMiddleware implements MiddlewareInterface
             if (is_array($payload)) {
                 $status = isset($previous['status']) ? (int)$previous['status'] : 200;
                 $data = isset($payload['data']) ? $payload['data'] : null;
-                $meta = isset($payload['meta']) ? $payload['meta'] : array();
+                $meta = isset($payload['meta']) ? $payload['meta'] : [];
 
                 // Повтор отдаёт сохранённый ответ и честно об этом сообщает:
                 // клиент должен понимать, что операция не выполнялась заново.

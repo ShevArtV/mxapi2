@@ -32,7 +32,7 @@ class mxApiClientCreateProcessor extends mxApiClientBaseProcessor
 
         /** @var xPDOObject $client */
         $client = $this->modx->newObject('mxApiClient');
-        $client->fromArray(array(
+        $client->fromArray([
             'name' => $name,
             'client_key' => \MxApi\Core\Auth\ClientSecret::generateKey(),
             'secret_hash' => \MxApi\Core\Auth\ClientSecret::hash($secret),
@@ -42,7 +42,7 @@ class mxApiClientCreateProcessor extends mxApiClientBaseProcessor
             'active' => true,
             'createdon' => $now,
             'editedon' => $now,
-        ));
+        ]);
 
         if (!$client->save()) {
             return $this->failure($this->modx->lexicon('mxapi_client_err_save'));

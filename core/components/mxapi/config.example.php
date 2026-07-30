@@ -10,7 +10,7 @@
  * проектных эндпоинтов — иначе чужие сайты получали бы чужой контракт.
  */
 
-return array(
+return [
     // Публичный префикс маршрутов.
     'route_prefix' => '/mxapi/v1',
 
@@ -27,35 +27,35 @@ return array(
     'allow_request_context' => false,
 
     // Провайдеры эндпоинтов: классы, реализующие MxApi\Core\Provider\ProviderInterface.
-    'providers' => array(
+    'providers' => [
         // 'MsOrderBridge\\MxApi\\OrdersProvider',
-    ),
+    ],
 
     // Дополнительные промежуточные обработчики запроса (MiddlewareInterface).
     // Встроенные — лимит частоты и идемпотентность — подключены всегда.
-    'middleware' => array(
+    'middleware' => [
         // 'SgApi\\Middleware\\SignatureCheck',
-    ),
+    ],
 
     // Проектные эндпоинты. Класс вне автозагрузки пакета — указать file.
-    'endpoints' => array(
-        // array(
-        //     'class' => 'SgApi\\Endpoint\\OrdersExportEndpoint',
-        //     'file' => MODX_CORE_PATH . 'components/sgapi/src/Endpoint/OrdersExportEndpoint.php',
-        // ),
-    ),
+    'endpoints' => [
+        // [
+        //     'class' => 'MyReviews\\Api\\Endpoint\\ReviewsStatsEndpoint',
+        //     'file' => MODX_CORE_PATH . 'components/myreviews/src/Endpoint/ReviewsStatsEndpoint.php',
+        // ],
+    ],
 
     // Алиасы исторических маршрутов: путь => идентификатор эндпоинта.
     // Пример совместимости старого Sleep & Glow, где клиент уже ходит на /api/v1.
-    'route_aliases' => array(
+    'route_aliases' => [
         // '/v1/orders/export' => 'orders.export',
-    ),
+    ],
 
     // Доверенные прокси: только для них учитывается X-Forwarded-For.
-    'trusted_proxies' => array(),
+    'trusted_proxies' => [],
 
     // Разрешённые Origin для CORS. Пусто — заголовки не отдаются.
-    'cors_origins' => array(),
+    'cors_origins' => [],
 
     // Что показывать в каталоге и OpenAPI: all | scope | permission.
     // all — весь публичный контракт (документация), scope — только вызываемое
@@ -64,4 +64,4 @@ return array(
 
     // Писать в журнал успешные чтения (ошибки и записи пишутся всегда).
     'log_reads' => false,
-);
+];

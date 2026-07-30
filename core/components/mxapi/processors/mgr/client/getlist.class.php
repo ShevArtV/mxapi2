@@ -10,11 +10,11 @@ class mxApiClientGetListProcessor extends mxApiClientBaseProcessor
 {
     public function process()
     {
-        $clients = $this->modx->getCollection('mxApiClient', array(
+        $clients = $this->modx->getCollection('mxApiClient', [
             'user_id' => (int)$this->user->get('id'),
-        ));
+        ]);
 
-        $rows = array();
+        $rows = [];
         foreach ($clients as $client) {
             $rows[] = $this->clientToArray($client);
         }

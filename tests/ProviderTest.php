@@ -28,17 +28,17 @@ class ProviderTest extends TestCase
     protected function setUp(): void
     {
         $this->platform = new FakePlatform();
-        $this->platform->users = array(new PlatformUser(2, 'manager', false, true, false));
-        $this->platform->passwords = array('manager' => 'secret');
-        $this->platform->permissions = array(
+        $this->platform->users = [new PlatformUser(2, 'manager', false, true, false)];
+        $this->platform->passwords = ['manager' => 'secret'];
+        $this->platform->permissions = [
             '2|mxapi_auth_token' => true,
             '2|mxapi_orders_read' => true,
-        );
+        ];
     }
 
     public function testProviderFromConfigRegistersEndpoints()
     {
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
 
         $this->assertNotNull($kernel->getRegistry()->get('demo.orders.list'));
     }
@@ -46,7 +46,7 @@ class ProviderTest extends TestCase
     public function testUnavailableProviderRegistersNothing()
     {
         DemoProvider::$available = false;
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
         DemoProvider::$available = true;
 
         $this->assertNull($kernel->getRegistry()->get('demo.orders.list'));
@@ -54,7 +54,7 @@ class ProviderTest extends TestCase
 
     public function testBrokenProviderDoesNotBreakOtherEndpoints()
     {
-        $kernel = $this->boot(array('providers' => array(BrokenProvider::class, DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [BrokenProvider::class, DemoProvider::class]]);
 
         $this->assertNotNull($kernel->getRegistry()->get('demo.orders.list'), 'Рабочий провайдер должен зарегистрироваться');
         $this->assertNotNull($kernel->getRegistry()->get('auth.token'), 'Встроенные эндпоинты должны остаться');
@@ -62,7 +62,7 @@ class ProviderTest extends TestCase
 
     public function testUnknownProviderClassIsLogged()
     {
-        $kernel = $this->boot(array('providers' => array('No\\Such\\Provider')));
+        $kernel = $this->boot(['providers' => ['No\\Such\\Provider']]);
 
         $this->assertNotNull($kernel->getRegistry()->get('auth.token'));
         $this->assertNotEmpty(array_filter($this->platform->logs, function ($entry) {
@@ -72,15 +72,15 @@ class ProviderTest extends TestCase
 
     public function testProcessorEndpointPassesOnlyDeclaredProperties()
     {
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
         $token = $this->issueToken($kernel, 'orders.read');
 
         $response = $kernel->handle(new Request(
             'GET',
             '/demo/orders',
-            array('limit' => '5', 'offset' => '10', 'status' => 'new', 'sudo' => '1', 'processors_path' => '/etc'),
-            array(),
-            array('authorization' => 'Bearer ' . $token),
+            ['limit' => '5', 'offset' => '10', 'status' => 'new', 'sudo' => '1', 'processors_path' => '/etc'],
+            [],
+            ['authorization' => 'Bearer ' . $token],
             '127.0.0.1'
         ));
 
@@ -100,15 +100,15 @@ class ProviderTest extends TestCase
 
     public function testProcessorEndpointReturnsListMeta()
     {
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
         $token = $this->issueToken($kernel, 'orders.read');
 
         $response = $kernel->handle(new Request(
             'GET',
             '/demo/orders',
-            array('limit' => '2'),
-            array(),
-            array('authorization' => 'Bearer ' . $token),
+            ['limit' => '2'],
+            [],
+            ['authorization' => 'Bearer ' . $token],
             '127.0.0.1'
         ));
 
@@ -120,15 +120,15 @@ class ProviderTest extends TestCase
     public function testProcessorErrorBecomesApiError()
     {
         $this->platform->processorSuccess = false;
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
         $token = $this->issueToken($kernel, 'orders.read');
 
         $response = $kernel->handle(new Request(
             'GET',
             '/demo/orders',
-            array(),
-            array(),
-            array('authorization' => 'Bearer ' . $token),
+            [],
+            [],
+            ['authorization' => 'Bearer ' . $token],
             '127.0.0.1'
         ));
 
@@ -140,7 +140,7 @@ class ProviderTest extends TestCase
 
     public function testCatalogHidesImplementationDetails()
     {
-        $kernel = $this->boot(array('providers' => array(DemoProvider::class)));
+        $kernel = $this->boot(['providers' => [DemoProvider::class]]);
         $metadata = $kernel->getRegistry()->get('demo.orders.list')->getMetadata();
 
         $this->assertSame('mgr/orders/getlist', $metadata->getExtra('processor'));
@@ -156,18 +156,18 @@ class ProviderTest extends TestCase
     private function boot(array $config)
     {
         $kernel = new Kernel($this->platform, new Config($config));
-        $kernel->boot(array(new TokenEndpoint($kernel->getTokenService())));
+        $kernel->boot([new TokenEndpoint($kernel->getTokenService())]);
 
         return $kernel;
     }
 
     private function issueToken(Kernel $kernel, $scope)
     {
-        $response = $kernel->handle(new Request('POST', '/auth/token', array(), array(
+        $response = $kernel->handle(new Request('POST', '/auth/token', [], [
             'username' => 'manager',
             'password' => 'secret',
             'scope' => $scope,
-        ), array(), '127.0.0.1'));
+        ], [], '127.0.0.1'));
 
         $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
 
@@ -195,7 +195,7 @@ class DemoProvider implements ProviderInterface
 
     public function getEndpoints(PlatformInterface $platform, Config $config)
     {
-        return array(new OrdersListEndpoint());
+        return [new OrdersListEndpoint()];
     }
 }
 
@@ -227,22 +227,22 @@ class OrdersListEndpoint extends ProcessorEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'demo.orders.list',
             'title' => 'Список заказов',
             'path' => '/demo/orders',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'orders.read',
             'permission' => 'mxapi_orders_read',
             'provider' => 'demo',
             'processor' => 'mgr/orders/getlist',
-            'field_map' => array('status' => 'status'),
-            'properties' => array('context' => 'web'),
-            'parameters' => array(
-                array('name' => 'limit', 'type' => 'integer'),
-                array('name' => 'offset', 'type' => 'integer'),
-                array('name' => 'status', 'type' => 'string'),
-            ),
-        );
+            'field_map' => ['status' => 'status'],
+            'properties' => ['context' => 'web'],
+            'parameters' => [
+                ['name' => 'limit', 'type' => 'integer'],
+                ['name' => 'offset', 'type' => 'integer'],
+                ['name' => 'status', 'type' => 'string'],
+            ],
+        ];
     }
 }

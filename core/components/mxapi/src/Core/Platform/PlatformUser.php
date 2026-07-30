@@ -88,10 +88,10 @@ class PlatformUser
      */
     public function toArray()
     {
-        return array(
+        return [
             'id' => $this->id,
             'username' => $this->username,
             'sudo' => $this->sudo,
-        );
+        ];
     }
 }

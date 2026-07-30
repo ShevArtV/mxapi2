@@ -41,7 +41,7 @@ abstract class AbstractEndpoint implements EndpointInterface
     protected function readParams(Request $request)
     {
         $input = $request->getParams();
-        $result = array();
+        $result = [];
 
         foreach ($this->getMetadata()->getParameters() as $parameter) {
             $value = $parameter->extract($input);
@@ -70,6 +70,6 @@ abstract class AbstractEndpoint implements EndpointInterface
 
         $offset = isset($params['offset']) ? max(0, (int)$params['offset']) : 0;
 
-        return array($limit, $offset);
+        return [$limit, $offset];
     }
 }

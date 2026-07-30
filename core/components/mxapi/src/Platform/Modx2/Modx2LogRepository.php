@@ -28,7 +28,7 @@ class Modx2LogRepository implements LogRepositoryInterface
         try {
             /** @var \xPDOObject $entry */
             $entry = $this->modx->newObject('mxApiLog');
-            $entry->fromArray(array(
+            $entry->fromArray([
                 'createdon' => isset($data['createdon']) ? (int)$data['createdon'] : time(),
                 'client_id' => isset($data['client_id']) ? (int)$data['client_id'] : 0,
                 'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : 0,
@@ -44,7 +44,7 @@ class Modx2LogRepository implements LogRepositoryInterface
                 'idempotency_key' => isset($data['idempotency_key']) ? substr((string)$data['idempotency_key'], 0, 100) : '',
                 'request_summary' => isset($data['request_summary']) ? $data['request_summary'] : null,
                 'response_summary' => isset($data['response_summary']) ? $data['response_summary'] : null,
-            ), '', true, true);
+            ], '', true, true);
 
             return (bool)$entry->save();
         } catch (\Exception $exception) {
@@ -64,11 +64,11 @@ class Modx2LogRepository implements LogRepositoryInterface
         }
 
         $query = $this->modx->newQuery('mxApiLog');
-        $query->where(array(
+        $query->where([
             'idempotency_key' => $idempotencyKey,
             'endpoint' => $endpointId,
             'status:<' => 400,
-        ));
+        ]);
         $query->sortby('createdon', 'DESC');
         $query->limit(1);
 
@@ -84,7 +84,7 @@ class Modx2LogRepository implements LogRepositoryInterface
     public function purgeOlderThan($before)
     {
         $query = $this->modx->newQuery('mxApiLog');
-        $query->where(array('createdon:<' => (int)$before));
+        $query->where(['createdon:<' => (int)$before]);
 
         $count = $this->modx->getCount('mxApiLog', $query);
         if ($count > 0) {

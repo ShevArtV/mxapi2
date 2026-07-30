@@ -8,11 +8,11 @@
  * @var string $namespace
  */
 
-$menus = array();
+$menus = [];
 
 /** @var modMenu $menu */
 $menu = $this->modx->newObject('modMenu');
-$menu->fromArray(array(
+$menu->fromArray([
     'text'        => 'mxapi',
     'parent'      => 'components',
     'description' => 'mxapi_menu_desc',
@@ -23,7 +23,7 @@ $menu->fromArray(array(
     'namespace'   => $namespace,
     'action'      => 'index',
     'permissions' => '',
-), '', true, true);
+], '', true, true);
 
 $menus[] = $menu;
 

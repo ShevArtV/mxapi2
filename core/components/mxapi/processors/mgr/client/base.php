@@ -62,7 +62,7 @@ abstract class mxApiClientBaseProcessor extends modProcessor
         }
 
         /** @var modUser $user */
-        $user = $this->modx->getObject('modUser', array('id' => $userId));
+        $user = $this->modx->getObject('modUser', ['id' => $userId]);
         if (!$user) {
             return $this->modx->lexicon('mxapi_client_err_user_nf');
         }
@@ -80,7 +80,7 @@ abstract class mxApiClientBaseProcessor extends modProcessor
      */
     protected function scopeMap()
     {
-        $map = array();
+        $map = [];
 
         foreach ($this->kernel->getRegistry()->all() as $endpoint) {
             $metadata = $endpoint->getMetadata();
@@ -91,12 +91,12 @@ abstract class mxApiClientBaseProcessor extends modProcessor
             }
 
             if (!isset($map[$scope])) {
-                $map[$scope] = array(
+                $map[$scope] = [
                     'scope' => $scope,
                     'permission' => $metadata->getPermission(),
                     'provider' => $metadata->getProvider(),
-                    'endpoints' => array(),
-                );
+                    'endpoints' => [],
+                ];
             }
 
             // Один scope обслуживает несколько эндпоинтов: показываем их
@@ -123,10 +123,10 @@ abstract class mxApiClientBaseProcessor extends modProcessor
     {
         $platformUser = $this->platform->findUserById($this->user->get('id'));
         if (!$platformUser) {
-            return array();
+            return [];
         }
 
-        $allowed = array();
+        $allowed = [];
         foreach ($this->scopeMap() as $scope => $row) {
             if ($row['permission'] === '' || $this->platform->checkPermission($platformUser, $row['permission'])) {
                 $allowed[$scope] = $row;
@@ -152,10 +152,10 @@ abstract class mxApiClientBaseProcessor extends modProcessor
             $raw = is_array($decoded) ? $decoded : preg_split('/[\s,]+/', trim($raw));
         }
         if (!is_array($raw)) {
-            $raw = array();
+            $raw = [];
         }
 
-        $scopes = array();
+        $scopes = [];
         foreach ($raw as $scope) {
             $scope = trim((string)$scope);
             if ($scope !== '' && !in_array($scope, $scopes, true)) {
@@ -176,7 +176,7 @@ abstract class mxApiClientBaseProcessor extends modProcessor
             if (!isset($allowed[$scope])) {
                 // Не различаем «нет такого scope» и «пользователю не положено»:
                 // и то и другое означает, что выдавать его нельзя.
-                $error = $this->modx->lexicon('mxapi_client_err_scope_na', array('scope' => $scope));
+                $error = $this->modx->lexicon('mxapi_client_err_scope_na', ['scope' => $scope]);
 
                 return null;
             }
@@ -233,10 +233,10 @@ abstract class mxApiClientBaseProcessor extends modProcessor
 
         // user_id в условии обязателен: без него страница одного пользователя
         // правила бы клиентов другого, подставив чужой id.
-        return $this->modx->getObject('mxApiClient', array(
+        return $this->modx->getObject('mxApiClient', [
             'id' => $id,
             'user_id' => (int)$this->user->get('id'),
-        ));
+        ]);
     }
 
     /**
@@ -250,7 +250,7 @@ abstract class mxApiClientBaseProcessor extends modProcessor
     {
         $row = $client->toArray();
         $scopes = $client->get('scopes');
-        $scopes = is_array($scopes) ? $scopes : array();
+        $scopes = is_array($scopes) ? $scopes : [];
 
         $row['scopes'] = $scopes;
         $row['scopes_text'] = implode(', ', $scopes);
@@ -261,11 +261,11 @@ abstract class mxApiClientBaseProcessor extends modProcessor
         $row['token_ttl'] = (int)$client->get('token_ttl');
         // Сколько живых токенов сейчас выдано: администратору важно понимать,
         // что отключение клиента прямо сейчас кого-то отрежет.
-        $row['tokens_active'] = $this->modx->getCount('mxApiToken', array(
+        $row['tokens_active'] = $this->modx->getCount('mxApiToken', [
             'client_id' => (int)$client->get('id'),
             'revokedon' => 0,
             'expireson:>' => time(),
-        ));
+        ]);
 
         unset($row['secret_hash']);
 
@@ -282,10 +282,10 @@ abstract class mxApiClientBaseProcessor extends modProcessor
     protected function revokeTokens($clientId)
     {
         $now = time();
-        $tokens = $this->modx->getCollection('mxApiToken', array(
+        $tokens = $this->modx->getCollection('mxApiToken', [
             'client_id' => (int)$clientId,
             'revokedon' => 0,
-        ));
+        ]);
 
         $count = 0;
         foreach ($tokens as $token) {

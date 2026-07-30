@@ -32,37 +32,37 @@ class OpenApiGenerator
      * @param array $info title, version, description, server
      * @return array
      */
-    public function generate(array $info = array())
+    public function generate(array $info = [])
     {
-        $info = array_merge(array(
+        $info = array_merge([
             'title' => 'mxApi',
             'version' => '1.0.0',
             'description' => 'Публичный API сайта на MODX Revolution.',
             'server' => rtrim((string)$this->config->get('route_prefix'), '/'),
-        ), $info);
+        ], $info);
 
-        return array(
+        return [
             'openapi' => '3.0.3',
-            'info' => array(
+            'info' => [
                 'title' => $info['title'],
                 'version' => $info['version'],
                 'description' => $info['description'],
-            ),
-            'servers' => array(
-                array('url' => $info['server']),
-            ),
-            'components' => array(
-                'securitySchemes' => array(
-                    'bearerAuth' => array(
+            ],
+            'servers' => [
+                ['url' => $info['server']],
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    'bearerAuth' => [
                         'type' => 'http',
                         'scheme' => 'bearer',
                         'description' => 'Токен выдаётся эндпоинтом /auth/token.',
-                    ),
-                ),
+                    ],
+                ],
                 'schemas' => $this->buildCommonSchemas(),
-            ),
+            ],
             'paths' => $this->buildPaths(),
-        );
+        ];
     }
 
     /**
@@ -70,7 +70,7 @@ class OpenApiGenerator
      */
     private function buildPaths()
     {
-        $paths = array();
+        $paths = [];
 
         foreach ($this->registry->publicOnly() as $endpoint) {
             $metadata = $endpoint->getMetadata();
@@ -93,25 +93,25 @@ class OpenApiGenerator
      */
     private function buildOperation(EndpointMetadata $metadata, $method)
     {
-        $operation = array(
+        $operation = [
             'operationId' => $metadata->getId() . '.' . strtolower($method),
             'summary' => $metadata->getTitle(),
             'description' => $this->buildDescription($metadata),
-            'tags' => array($metadata->getProvider()),
+            'tags' => [$metadata->getProvider()],
             'responses' => $this->buildResponses($metadata),
-        );
+        ];
 
         if ($metadata->isDeprecated()) {
             $operation['deprecated'] = true;
         }
 
         if ($metadata->requiresAuth()) {
-            $operation['security'] = array(array('bearerAuth' => array()));
+            $operation['security'] = [['bearerAuth' => []]];
         }
 
-        $parameters = array();
-        $bodyProperties = array();
-        $requiredBody = array();
+        $parameters = [];
+        $bodyProperties = [];
+        $requiredBody = [];
 
         foreach ($metadata->getParameters() as $parameter) {
             if ($parameter->getIn() === ParameterMetadata::IN_BODY && $method !== 'GET') {
@@ -122,39 +122,39 @@ class OpenApiGenerator
                 continue;
             }
 
-            $parameters[] = array(
+            $parameters[] = [
                 'name' => $parameter->getName(),
                 'in' => $parameter->getIn() === ParameterMetadata::IN_PATH ? 'path' : 'query',
                 'required' => $parameter->getIn() === ParameterMetadata::IN_PATH ? true : $parameter->isRequired(),
                 'description' => $parameter->toArray()['description'],
                 'schema' => $this->buildSchema($parameter),
-            );
+            ];
         }
 
         // Параметры пути объявлены в самом маршруте — если эндпоинт их не
         // задекларировал, OpenAPI без них будет невалиден.
         foreach ($this->extractPathParameters($metadata->getPath()) as $name) {
             if (!$this->hasParameter($parameters, $name)) {
-                $parameters[] = array(
+                $parameters[] = [
                     'name' => $name,
                     'in' => 'path',
                     'required' => true,
                     'description' => '',
-                    'schema' => array('type' => 'string'),
-                );
+                    'schema' => ['type' => 'string'],
+                ];
             }
         }
 
         // Контекст из запроса — часть контракта такого эндпоинта, поэтому он
         // обязан быть виден в спецификации, а не только в описании.
         if ($metadata->takesContextFromRequest()) {
-            $parameters[] = array(
+            $parameters[] = [
                 'name' => 'X-MxApi-Context',
                 'in' => 'header',
                 'required' => false,
                 'description' => 'Контекст MODX, в котором выполнять запрос. По умолчанию — mxapi.context.',
-                'schema' => array('type' => 'string'),
-            );
+                'schema' => ['type' => 'string'],
+            ];
         }
 
         if (!empty($parameters)) {
@@ -162,17 +162,17 @@ class OpenApiGenerator
         }
 
         if (!empty($bodyProperties)) {
-            $schema = array('type' => 'object', 'properties' => $bodyProperties);
+            $schema = ['type' => 'object', 'properties' => $bodyProperties];
             if (!empty($requiredBody)) {
                 $schema['required'] = $requiredBody;
             }
 
-            $operation['requestBody'] = array(
+            $operation['requestBody'] = [
                 'required' => !empty($requiredBody),
-                'content' => array(
-                    'application/json' => array('schema' => $schema),
-                ),
-            );
+                'content' => [
+                    'application/json' => ['schema' => $schema],
+                ],
+            ];
         }
 
         return $operation;
@@ -186,7 +186,7 @@ class OpenApiGenerator
     {
         $description = $metadata->getDescription();
 
-        $notes = array();
+        $notes = [];
         if ($metadata->getScope() !== '') {
             $notes[] = 'Scope: `' . $metadata->getScope() . '`.';
         }
@@ -212,19 +212,19 @@ class OpenApiGenerator
      */
     private function buildResponses(EndpointMetadata $metadata)
     {
-        $responses = array(
-            '200' => array(
+        $responses = [
+            '200' => [
                 'description' => $metadata->toArray()['response_description'] !== ''
                     ? $metadata->toArray()['response_description']
                     : 'Успешный ответ.',
-                'content' => array(
-                    'application/json' => array(
-                        'schema' => array('$ref' => '#/components/schemas/SuccessResponse'),
-                    ),
-                ),
-            ),
+                'content' => [
+                    'application/json' => [
+                        'schema' => ['$ref' => '#/components/schemas/SuccessResponse'],
+                    ],
+                ],
+            ],
             '400' => $this->errorResponse('Некорректный запрос.'),
-        );
+        ];
 
         if ($metadata->requiresAuth()) {
             $responses['401'] = $this->errorResponse('Токен отсутствует, истёк или отозван.');
@@ -242,14 +242,14 @@ class OpenApiGenerator
      */
     private function errorResponse($description)
     {
-        return array(
+        return [
             'description' => $description,
-            'content' => array(
-                'application/json' => array(
-                    'schema' => array('$ref' => '#/components/schemas/ErrorResponse'),
-                ),
-            ),
-        );
+            'content' => [
+                'application/json' => [
+                    'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -257,32 +257,32 @@ class OpenApiGenerator
      */
     private function buildCommonSchemas()
     {
-        return array(
-            'SuccessResponse' => array(
+        return [
+            'SuccessResponse' => [
                 'type' => 'object',
-                'properties' => array(
-                    'success' => array('type' => 'boolean', 'example' => true),
-                    'meta' => array('type' => 'object'),
-                    'data' => array('description' => 'Полезная нагрузка ответа.'),
-                ),
-                'required' => array('success'),
-            ),
-            'ErrorResponse' => array(
+                'properties' => [
+                    'success' => ['type' => 'boolean', 'example' => true],
+                    'meta' => ['type' => 'object'],
+                    'data' => ['description' => 'Полезная нагрузка ответа.'],
+                ],
+                'required' => ['success'],
+            ],
+            'ErrorResponse' => [
                 'type' => 'object',
-                'properties' => array(
-                    'success' => array('type' => 'boolean', 'example' => false),
-                    'error' => array(
+                'properties' => [
+                    'success' => ['type' => 'boolean', 'example' => false],
+                    'error' => [
                         'type' => 'object',
-                        'properties' => array(
-                            'code' => array('type' => 'string', 'example' => 'invalid_parameter'),
-                            'message' => array('type' => 'string'),
-                            'details' => array('type' => 'object'),
-                        ),
-                    ),
-                ),
-                'required' => array('success', 'error'),
-            ),
-        );
+                        'properties' => [
+                            'code' => ['type' => 'string', 'example' => 'invalid_parameter'],
+                            'message' => ['type' => 'string'],
+                            'details' => ['type' => 'object'],
+                        ],
+                    ],
+                ],
+                'required' => ['success', 'error'],
+            ],
+        ];
     }
 
     /**
@@ -293,16 +293,16 @@ class OpenApiGenerator
     {
         $spec = $parameter->toArray();
 
-        $types = array(
-            ParameterMetadata::TYPE_INTEGER => array('type' => 'integer'),
-            ParameterMetadata::TYPE_NUMBER => array('type' => 'number'),
-            ParameterMetadata::TYPE_BOOLEAN => array('type' => 'boolean'),
-            ParameterMetadata::TYPE_ARRAY => array('type' => 'array', 'items' => array('type' => 'string')),
-            ParameterMetadata::TYPE_OBJECT => array('type' => 'object'),
-            ParameterMetadata::TYPE_DATE => array('type' => 'string', 'format' => 'date'),
-        );
+        $types = [
+            ParameterMetadata::TYPE_INTEGER => ['type' => 'integer'],
+            ParameterMetadata::TYPE_NUMBER => ['type' => 'number'],
+            ParameterMetadata::TYPE_BOOLEAN => ['type' => 'boolean'],
+            ParameterMetadata::TYPE_ARRAY => ['type' => 'array', 'items' => ['type' => 'string']],
+            ParameterMetadata::TYPE_OBJECT => ['type' => 'object'],
+            ParameterMetadata::TYPE_DATE => ['type' => 'string', 'format' => 'date'],
+        ];
 
-        $schema = isset($types[$parameter->getType()]) ? $types[$parameter->getType()] : array('type' => 'string');
+        $schema = isset($types[$parameter->getType()]) ? $types[$parameter->getType()] : ['type' => 'string'];
 
         if ($spec['default'] !== null) {
             $schema['default'] = $spec['default'];
@@ -331,7 +331,7 @@ class OpenApiGenerator
     {
         preg_match_all('/\{(\w+)\s*(?::[^}]+)?\}/', $path, $matches);
 
-        return isset($matches[1]) ? $matches[1] : array();
+        return isset($matches[1]) ? $matches[1] : [];
     }
 
     /**

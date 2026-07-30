@@ -7,14 +7,14 @@
  */
 
 /* set some default values */
-$values = array(
+$values = [
     'someKey' => 'someValue',
-);
+];
 switch ($options[xPDOTransport::PACKAGE_ACTION]) {
     case xPDOTransport::ACTION_INSTALL:
     case xPDOTransport::ACTION_UPGRADE:
         /*
-        $setting = $modx->getObject('modSystemSetting',array('key' => 'mypkg.someKey'));
+        $setting = $modx->getObject('modSystemSetting', ['key' => 'mypkg.someKey']);
         if ($setting != null) { $values['someKey'] = $setting->get('value'); }
         unset($setting);
         */

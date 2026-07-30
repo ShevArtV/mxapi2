@@ -58,9 +58,9 @@ class ClientRecord
         $this->tokenTtl = isset($row['token_ttl']) ? (int)$row['token_ttl'] : 0;
         $this->active = isset($row['active']) ? (bool)$row['active'] : false;
 
-        $this->scopes = self::toList(isset($row['scopes']) ? $row['scopes'] : array());
-        $this->allowedIps = self::toList(isset($row['allowed_ips']) ? $row['allowed_ips'] : array());
-        $this->contexts = self::toList(isset($row['contexts']) ? $row['contexts'] : array());
+        $this->scopes = self::toList(isset($row['scopes']) ? $row['scopes'] : []);
+        $this->allowedIps = self::toList(isset($row['allowed_ips']) ? $row['allowed_ips'] : []);
+        $this->contexts = self::toList(isset($row['contexts']) ? $row['contexts'] : []);
     }
 
     /**
@@ -205,7 +205,7 @@ class ClientRecord
 
         $value = (string)$value;
         if ($value === '') {
-            return array();
+            return [];
         }
 
         $decoded = json_decode($value, true);
@@ -217,6 +217,6 @@ class ClientRecord
 
         return is_array($items) ? array_values(array_filter($items, function ($item) {
             return $item !== '';
-        })) : array();
+        })) : [];
     }
 }

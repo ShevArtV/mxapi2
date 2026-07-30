@@ -29,21 +29,21 @@ class RevokeEndpoint extends AbstractEndpoint
      */
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'auth.revoke',
             'title' => 'Отзыв токена',
             'description' => 'Немедленно делает текущий bearer-токен недействительным.',
             'path' => '/auth/revoke',
-            'methods' => array('POST'),
+            'methods' => ['POST'],
             'scope' => '',
             'permission' => 'mxapi_auth_revoke',
             'write' => true,
             'response_description' => 'revoked: был ли токен отозван этим вызовом.',
-            'response_example' => array(
+            'response_example' => [
                 'success' => true,
-                'data' => array('revoked' => true),
-            ),
-        );
+                'data' => ['revoked' => true],
+            ],
+        ];
     }
 
     /**
@@ -51,6 +51,6 @@ class RevokeEndpoint extends AbstractEndpoint
      */
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array('revoked' => $this->tokenService->revoke($request)));
+        return Response::success(['revoked' => $this->tokenService->revoke($request)]);
     }
 }

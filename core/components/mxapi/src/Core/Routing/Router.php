@@ -30,7 +30,7 @@ class Router
      * @param EndpointRegistry $registry
      * @param array $aliases Совместимость с историческими маршрутами сайта.
      */
-    public function __construct(EndpointRegistry $registry, array $aliases = array())
+    public function __construct(EndpointRegistry $registry, array $aliases = [])
     {
         $this->registry = $registry;
         $this->aliases = $aliases;
@@ -58,7 +58,7 @@ class Router
                 throw ApiException::methodNotAllowed(
                     $request->getPath(),
                     $request->getMethod(),
-                    isset($result[1]) ? $result[1] : array()
+                    isset($result[1]) ? $result[1] : []
                 );
 
             default:

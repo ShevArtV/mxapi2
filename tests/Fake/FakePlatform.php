@@ -20,40 +20,40 @@ use MxApi\Core\Platform\ProcessorResult;
 class FakePlatform implements PlatformInterface, TokenRepositoryInterface, ClientRepositoryInterface, LogRepositoryInterface
 {
     /** @var array */
-    public $options = array();
+    public $options = [];
 
     /** @var PlatformUser[] */
-    public $users = array();
+    public $users = [];
 
     /** @var array username => password */
-    public $passwords = array();
+    public $passwords = [];
 
     /** @var array Права: "userId|permission" => true; "userId|permission@context" — право только в этом контексте */
-    public $permissions = array();
+    public $permissions = [];
 
     /** @var string Контекст, в котором работает платформа. */
     public $contextKey = 'mgr';
 
     /** @var array Контексты, которые платформа «знает»; остальные считаются несуществующими. */
-    public $knownContexts = array('mgr', 'web');
+    public $knownContexts = ['mgr', 'web'];
 
     /** @var array Журнал проверок прав: [['permission' => ..., 'context' => ...]] */
-    public $permissionChecks = array();
+    public $permissionChecks = [];
 
     /** @var array */
-    public $tokens = array();
+    public $tokens = [];
 
     /** @var ClientRecord[] */
-    public $clients = array();
+    public $clients = [];
 
     /** @var array Операционные логи платформы. */
-    public $logs = array();
+    public $logs = [];
 
     /** @var array Записи журнала вызовов API. */
-    public $journal = array();
+    public $journal = [];
 
     /** @var array */
-    public $events = array();
+    public $events = [];
 
     /** @var PlatformUser|null */
     public $runtimeUser;
@@ -62,7 +62,7 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     public $time = 1000000;
 
     /** @var array Свойства последнего запуска процессора — для проверки allow-list. */
-    public $lastProcessorProperties = array();
+    public $lastProcessorProperties = [];
 
     /** @var string */
     public $lastProcessor = '';
@@ -71,7 +71,7 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     public $processorSuccess = true;
 
     /** @var array */
-    private $cache = array();
+    private $cache = [];
 
     /** @var int */
     private $tokenId = 0;
@@ -86,9 +86,9 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
         return $this->time;
     }
 
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
-        $this->logs[] = array('level' => $level, 'message' => $message, 'context' => $context);
+        $this->logs[] = ['level' => $level, 'message' => $message, 'context' => $context];
     }
 
     public function findUserByUsername($username)
@@ -144,7 +144,7 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     {
         // Контекст фиксируется вместе с правом: тесты проверяют, что право
         // спрашивают уже после переключения контекста.
-        $this->permissionChecks[] = array('permission' => $permission, 'context' => $this->contextKey);
+        $this->permissionChecks[] = ['permission' => $permission, 'context' => $this->contextKey];
 
         if ($user->isSudo()) {
             return true;
@@ -159,40 +159,40 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
         return !empty($this->permissions[$key]);
     }
 
-    public function runProcessor($processor, array $properties = array(), array $options = array())
+    public function runProcessor($processor, array $properties = [], array $options = [])
     {
         $this->lastProcessor = $processor;
         $this->lastProcessorProperties = $properties;
 
         if (!$this->processorSuccess) {
-            return new ProcessorResult(false, array('success' => false, 'message' => 'Нельзя'), 'Нельзя', array(
-                array('id' => 'status', 'msg' => 'Недопустимый статус'),
-            ));
+            return new ProcessorResult(false, ['success' => false, 'message' => 'Нельзя'], 'Нельзя', [
+                ['id' => 'status', 'msg' => 'Недопустимый статус'],
+            ]);
         }
 
-        return new ProcessorResult(true, array(
+        return new ProcessorResult(true, [
             'success' => true,
             'total' => 2,
-            'results' => array(
-                array('id' => 1, 'num' => '2607-1'),
-                array('id' => 2, 'num' => '2607-2'),
-            ),
-        ));
+            'results' => [
+                ['id' => 1, 'num' => '2607-1'],
+                ['id' => 2, 'num' => '2607-2'],
+            ],
+        ]);
     }
 
-    public function invokeEvent($event, array $params = array())
+    public function invokeEvent($event, array $params = [])
     {
-        $this->events[] = array('event' => $event, 'params' => $params);
+        $this->events[] = ['event' => $event, 'params' => $params];
 
-        return array();
+        return [];
     }
 
-    public function cacheGet($key, array $options = array())
+    public function cacheGet($key, array $options = [])
     {
         return isset($this->cache[$key]) ? $this->cache[$key] : null;
     }
 
-    public function cacheSet($key, $value, $lifetime = 0, array $options = array())
+    public function cacheSet($key, $value, $lifetime = 0, array $options = [])
     {
         $this->cache[$key] = $value;
 

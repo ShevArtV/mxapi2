@@ -37,7 +37,7 @@ class RateLimitMiddleware implements MiddlewareInterface
 
         $state = $platform->cacheGet($key);
         if (!is_array($state) || !isset($state['window'], $state['count']) || ($now - (int)$state['window']) >= self::WINDOW_SECONDS) {
-            $state = array('window' => $now, 'count' => 0);
+            $state = ['window' => $now, 'count' => 0];
         }
 
         $state['count'] = (int)$state['count'] + 1;

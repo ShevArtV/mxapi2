@@ -26,7 +26,7 @@ class mxApiIndexManagerController extends modExtraManagerController
 
     public function getLanguageTopics()
     {
-        return array('mxapi:default');
+        return ['mxapi:default'];
     }
 
     public function checkPermissions()
@@ -60,13 +60,13 @@ class mxApiIndexManagerController extends modExtraManagerController
         // каталог оставался пустым.
         $this->addHtml('<script type="text/javascript">
         var MxApi = window.MxApi || {};
-        MxApi.config = ' . $this->modx->toJSON(array(
+        MxApi.config = ' . $this->modx->toJSON([
             'connector_url' => $this->assetsUrl . 'connector.php',
             'assets_url' => $this->assetsUrl,
             'route_prefix' => $this->modx->getOption('mxapi.route_prefix', null, '/mxapi/v1'),
             'site_url' => rtrim($this->modx->getOption('site_url'), '/'),
             'enabled' => (bool)$this->modx->getOption('mxapi.enabled', null, true),
-        )) . ';
+        ]) . ';
         Ext.onReady(function () { MxApi.init(); });
         </script>');
     }
@@ -80,7 +80,7 @@ class mxApiIndexManagerController extends modExtraManagerController
      * @param array $scriptProperties
      * @return string
      */
-    public function getContent(array $scriptProperties = array())
+    public function getContent(array $scriptProperties = [])
     {
         return '<div id="mxapi-catalog"></div>';
     }

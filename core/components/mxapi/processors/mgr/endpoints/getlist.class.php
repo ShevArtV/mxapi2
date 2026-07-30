@@ -36,7 +36,7 @@ class mxApiEndpointGetListProcessor extends modProcessor
         $query = trim((string)$this->getProperty('query', ''));
         $provider = trim((string)$this->getProperty('provider', ''));
 
-        $rows = array();
+        $rows = [];
         foreach ($kernel->getRegistry()->all() as $endpoint) {
             $metadata = $endpoint->getMetadata();
             $row = $metadata->toArray();
@@ -71,7 +71,7 @@ class mxApiEndpointGetListProcessor extends modProcessor
      */
     private function matches(array $row, $query)
     {
-        $haystack = implode(' ', array(
+        $haystack = implode(' ', [
             $row['id'],
             $row['title'],
             $row['description'],
@@ -79,7 +79,7 @@ class mxApiEndpointGetListProcessor extends modProcessor
             $row['scope'],
             $row['permission'],
             $row['provider'],
-        ));
+        ]);
 
         return mb_stripos($haystack, $query) !== false;
     }

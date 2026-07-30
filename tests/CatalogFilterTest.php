@@ -32,9 +32,9 @@ class CatalogFilterTest extends TestCase
     protected function setUp(): void
     {
         $this->platform = new FakePlatform();
-        $this->platform->users = array(new PlatformUser(2, 'manager', false, true, false));
-        $this->platform->passwords = array('manager' => 'secret');
-        $this->platform->permissions = array(
+        $this->platform->users = [new PlatformUser(2, 'manager', false, true, false)];
+        $this->platform->passwords = ['manager' => 'secret'];
+        $this->platform->permissions = [
             '2|mxapi_auth_token' => true,
             '2|mxapi_meta_read' => true,
             '2|mxapi_catalog_read' => true,
@@ -43,7 +43,7 @@ class CatalogFilterTest extends TestCase
             '2|mxapi_catalog_write' => true,
             // Право снято — эндпоинт не должен быть виден в режиме permission.
             '2|mxapi_catalog_secret' => false,
-        );
+        ];
     }
 
     public function testAllModeShowsWholePublicContract()
@@ -103,7 +103,7 @@ class CatalogFilterTest extends TestCase
      */
     private function catalogIds($mode, $scope)
     {
-        $ids = array();
+        $ids = [];
         foreach ($this->catalog($mode, $scope)->getPayload()['data'] as $item) {
             $ids[] = $item['id'];
         }
@@ -118,37 +118,37 @@ class CatalogFilterTest extends TestCase
      */
     private function catalog($mode, $scope)
     {
-        $kernel = new Kernel($this->platform, new Config(array(
+        $kernel = new Kernel($this->platform, new Config([
             'token_ttl' => 3600,
             'catalog_filter' => $mode,
-        )));
+        ]));
 
-        $kernel->boot(array(
+        $kernel->boot([
             new TokenEndpoint($kernel->getTokenService()),
             new EndpointsEndpoint($kernel->getRegistry()),
             new CatalogReadEndpoint(),
             new CatalogWriteEndpoint(),
             new CatalogInternalEndpoint(),
             new CatalogSecretEndpoint(),
-        ));
+        ]);
 
         // Клиент со всеми scope: ограничение задаётся тем, что просим у токена.
-        $this->platform->clients = array(new ClientRecord(array(
+        $this->platform->clients = [new ClientRecord([
             'id' => 3,
             'client_key' => 'catalog',
             'secret_hash' => password_hash('catalog-secret', PASSWORD_DEFAULT),
             'user_id' => 2,
-            'scopes' => array(),
-            'contexts' => array('mgr'),
+            'scopes' => [],
+            'contexts' => ['mgr'],
             'active' => 1,
-        )));
+        ])];
 
-        $issued = $kernel->handle(new Request('POST', '/auth/token', array(), array(
+        $issued = $kernel->handle(new Request('POST', '/auth/token', [], [
             'grant_type' => 'client_credentials',
             'client_id' => 'catalog',
             'client_secret' => 'catalog-secret',
             'scope' => $scope,
-        ), array(), '127.0.0.1'));
+        ], [], '127.0.0.1'));
 
         $this->assertSame(200, $issued->getStatus(), 'Токен не выдан: ' . json_encode($issued->getPayload()));
         $token = $issued->getPayload()['data']['access_token'];
@@ -156,9 +156,9 @@ class CatalogFilterTest extends TestCase
         $response = $kernel->handle(new Request(
             'GET',
             '/meta/endpoints',
-            array(),
-            array(),
-            array('authorization' => 'Bearer ' . $token),
+            [],
+            [],
+            ['authorization' => 'Bearer ' . $token],
             '127.0.0.1'
         ));
 
@@ -172,18 +172,18 @@ class CatalogReadEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.read',
             'path' => '/catalog/items',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'catalog.read',
             'permission' => 'mxapi_catalog_read',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }
 
@@ -191,19 +191,19 @@ class CatalogWriteEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.write',
             'path' => '/catalog/items',
-            'methods' => array('POST'),
+            'methods' => ['POST'],
             'scope' => 'catalog.write',
             'permission' => 'mxapi_catalog_write',
             'write' => true,
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }
 
@@ -214,18 +214,18 @@ class CatalogSecretEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.secret',
             'path' => '/catalog/secret',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'catalog.secret',
             'permission' => 'mxapi_catalog_secret',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }
 
@@ -233,18 +233,18 @@ class CatalogInternalEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.internal',
             'path' => '/catalog/internal',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'context' => EndpointMetadata::CONTEXT_INTERNAL,
             'scope' => 'catalog.read',
             'permission' => 'mxapi_catalog_read',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }

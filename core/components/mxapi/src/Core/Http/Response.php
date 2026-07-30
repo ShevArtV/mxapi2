@@ -25,7 +25,7 @@ class Response
     /** @var callable|null Печатает тело сам; используется для потоковой отдачи. */
     private $streamer;
 
-    private function __construct($status, array $headers = array())
+    private function __construct($status, array $headers = [])
     {
         $this->status = $status;
         $this->headers = $headers;
@@ -37,10 +37,10 @@ class Response
      * @param int $status
      * @return self
      */
-    public static function success($data = null, array $meta = array(), $status = 200)
+    public static function success($data = null, array $meta = [], $status = 200)
     {
         $response = new self($status);
-        $payload = array('success' => true);
+        $payload = ['success' => true];
         if (!empty($meta)) {
             $payload['meta'] = $meta;
         }
@@ -57,17 +57,17 @@ class Response
      * @param array $details
      * @return self
      */
-    public static function error($code, $message, $status = 400, array $details = array())
+    public static function error($code, $message, $status = 400, array $details = [])
     {
         $response = new self($status);
-        $response->payload = array(
+        $response->payload = [
             'success' => false,
-            'error' => array(
+            'error' => [
                 'code' => $code,
                 'message' => $message,
                 'details' => $details,
-            ),
-        );
+            ],
+        ];
 
         return $response;
     }

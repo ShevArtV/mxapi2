@@ -37,7 +37,7 @@ interface PlatformInterface
      * @param array $context
      * @return void
      */
-    public function log($level, $message, array $context = array());
+    public function log($level, $message, array $context = []);
 
     /**
      * @param string $username
@@ -104,7 +104,7 @@ interface PlatformInterface
      * @param array $options
      * @return ProcessorResult
      */
-    public function runProcessor($processor, array $properties = array(), array $options = array());
+    public function runProcessor($processor, array $properties = [], array $options = []);
 
     /**
      * Вызов события платформы (точка расширения для пакетов).
@@ -113,14 +113,14 @@ interface PlatformInterface
      * @param array $params
      * @return array Собранные результаты обработчиков.
      */
-    public function invokeEvent($event, array $params = array());
+    public function invokeEvent($event, array $params = []);
 
     /**
      * @param string $key
      * @param array $options
      * @return mixed|null
      */
-    public function cacheGet($key, array $options = array());
+    public function cacheGet($key, array $options = []);
 
     /**
      * @param string $key
@@ -129,7 +129,7 @@ interface PlatformInterface
      * @param array $options
      * @return bool
      */
-    public function cacheSet($key, $value, $lifetime = 0, array $options = array());
+    public function cacheSet($key, $value, $lifetime = 0, array $options = []);
 
     /**
      * @return \MxApi\Core\Auth\TokenRepositoryInterface

@@ -75,7 +75,7 @@ EOD;
         $this->restrictPrefix = $restrictPrefix;
         $tablePrefix .= $tablePrefixForSchema;
         $schemaVersion = xPDO::SCHEMA_VERSION;
-        $xmlContent = array();
+        $xmlContent = [];
         $xmlContent[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
         $xmlContent[] = "<model package=\"{$package}\" baseClass=\"{$baseClass}\" platform=\"mysql\" defaultEngine=\"MyISAM\" version=\"{$schemaVersion}\">";
         //read list of tables
@@ -90,9 +90,9 @@ EOD;
         $tables= $tablesStmt->fetchAll(PDO::FETCH_NUM);
         if ($this->manager->xpdo->getDebug() === true) $this->manager->xpdo->log(xPDO::LOG_LEVEL_DEBUG, print_r($tables, true));
         foreach ($tables as $table) {
-            $xmlObject= array();
-            $xmlFields= array();
-            $xmlIndices= array();
+            $xmlObject= [];
+            $xmlFields= [];
+            $xmlIndices= [];
             $tmpPrefix = str_replace($tablePrefixForSchema,'',$tablePrefix);
             if (!$tableName= $this->getTableName($table[0], $tmpPrefix, false)) {
                 continue;
@@ -172,13 +172,13 @@ EOD;
                 $indexes= $indexesStmt->fetchAll(PDO::FETCH_ASSOC);
                 if ($this->manager->xpdo->getDebug() === true) $this->manager->xpdo->log(xPDO::LOG_LEVEL_DEBUG, "Indices for table {$table[0]}: " . print_r($indexes, true));
                 if (!empty($indexes)) {
-                    $indices = array();
+                    $indices = [];
                     foreach ($indexes as $index) {
-                        if (!array_key_exists($index['Key_name'], $indices)) $indices[$index['Key_name']] = array();
+                        if (!array_key_exists($index['Key_name'], $indices)) $indices[$index['Key_name']] = [];
                         $indices[$index['Key_name']][$index['Seq_in_index']] = $index;
                     }
                     foreach ($indices as $index) {
-                        $xmlIndexCols = array();
+                        $xmlIndexCols = [];
                         if ($this->manager->xpdo->getDebug() === true) $this->manager->xpdo->log(xPDO::LOG_LEVEL_DEBUG, "Details of index: " . print_r($index, true));
                         foreach ($index as $columnSeq => $column) {
                             if ($columnSeq == 1) {
@@ -251,11 +251,11 @@ EOD;
                     /** @var SimpleXMLElement $object */
                     $class = (string) $object['class'];
                     $extends = isset($object['extends']) ? (string) $object['extends'] : $this->model['baseClass'];
-                    $this->classes[$class] = array('extends' => $extends);
-                    $this->map[$class] = array(
+                    $this->classes[$class] = ['extends' => $extends];
+                    $this->map[$class] = [
                         'package' => $this->model['package'],
                         'version' => $this->model['version']
-                    );
+                    ];
                     foreach ($object->attributes() as $objAttrKey => $objAttr) {
                         if ($objAttrKey == 'class') continue;
                         $this->map[$class][$objAttrKey]= (string) $objAttr;
@@ -263,18 +263,18 @@ EOD;
 
                     $engine = (string) $object['engine'];
                     if (!empty($engine)) {
-                        $this->map[$class]['tableMeta'] = array('engine' => $engine);
+                        $this->map[$class]['tableMeta'] = ['engine' => $engine];
                     }
 
-                    $this->map[$class]['fields']= array();
-                    $this->map[$class]['fieldMeta']= array();
+                    $this->map[$class]['fields']= [];
+                    $this->map[$class]['fieldMeta']= [];
                     if (isset($object->field)) {
                         foreach ($object->field as $field) {
                             $key = (string) $field['key'];
                             $dbtype = (string) $field['dbtype'];
                             $defaultType = $this->manager->xpdo->driver->getPhpType($dbtype);
                             $this->map[$class]['fields'][$key]= null;
-                            $this->map[$class]['fieldMeta'][$key]= array();
+                            $this->map[$class]['fieldMeta'][$key]= [];
                             foreach ($field->attributes() as $fldAttrKey => $fldAttr) {
                                 $fldAttrValue = (string) $fldAttr;
                                 switch ($fldAttrKey) {
@@ -310,10 +310,10 @@ EOD;
                         }
                     }
                     if (isset($object->alias)) {
-                        $this->map[$class]['fieldAliases'] = array();
+                        $this->map[$class]['fieldAliases'] = [];
                         foreach ($object->alias as $alias) {
                             $aliasKey = (string) $alias['key'];
-                            $aliasNode = array();
+                            $aliasNode = [];
                             foreach ($alias->attributes() as $attrName => $attr) {
                                 $attrValue = (string) $attr;
                                 switch ($attrName) {
@@ -332,9 +332,9 @@ EOD;
                         }
                     }
                     if (isset($object->index)) {
-                        $this->map[$class]['indexes'] = array();
+                        $this->map[$class]['indexes'] = [];
                         foreach ($object->index as $index) {
-                            $indexNode = array();
+                            $indexNode = [];
                             $indexName = (string) $index['name'];
                             foreach ($index->attributes() as $attrName => $attr) {
                                 $attrValue = (string) $attr;
@@ -351,10 +351,10 @@ EOD;
                                 }
                             }
                             if (!empty($indexNode) && isset($index->column)) {
-                                $indexNode['columns']= array();
+                                $indexNode['columns']= [];
                                 foreach ($index->column as $column) {
                                     $columnKey = (string) $column['key'];
-                                    $indexNode['columns'][$columnKey] = array();
+                                    $indexNode['columns'][$columnKey] = [];
                                     foreach ($column->attributes() as $attrName => $attr) {
                                         $attrValue = (string) $attr;
                                         switch ($attrName) {
@@ -375,9 +375,9 @@ EOD;
                         }
                     }
                     if (isset($object->composite)) {
-                        $this->map[$class]['composites'] = array();
+                        $this->map[$class]['composites'] = [];
                         foreach ($object->composite as $composite) {
-                            $compositeNode = array();
+                            $compositeNode = [];
                             $compositeAlias = (string) $composite['alias'];
                             foreach ($composite->attributes() as $attrName => $attr) {
                                 $attrValue = (string) $attr;
@@ -400,8 +400,8 @@ EOD;
                                         if (!empty($expression)) {
                                             $expression = $this->manager->xpdo->fromJSON($expression);
                                             if (!empty($expression)) {
-                                                if (!isset($compositeNode['criteria'])) $compositeNode['criteria'] = array();
-                                                if (!isset($compositeNode['criteria'][$criteriaTarget])) $compositeNode['criteria'][$criteriaTarget] = array();
+                                                if (!isset($compositeNode['criteria'])) $compositeNode['criteria'] = [];
+                                                if (!isset($compositeNode['criteria'][$criteriaTarget])) $compositeNode['criteria'][$criteriaTarget] = [];
                                                 $compositeNode['criteria'][$criteriaTarget] = array_merge($compositeNode['criteria'][$criteriaTarget], (array) $expression);
                                             }
                                         }
@@ -412,9 +412,9 @@ EOD;
                         }
                     }
                     if (isset($object->aggregate)) {
-                        $this->map[$class]['aggregates'] = array();
+                        $this->map[$class]['aggregates'] = [];
                         foreach ($object->aggregate as $aggregate) {
-                            $aggregateNode = array();
+                            $aggregateNode = [];
                             $aggregateAlias = (string) $aggregate['alias'];
                             foreach ($aggregate->attributes() as $attrName => $attr) {
                                 $attrValue = (string) $attr;
@@ -437,8 +437,8 @@ EOD;
                                         if (!empty($expression)) {
                                             $expression = $this->manager->xpdo->fromJSON($expression);
                                             if (!empty($expression)) {
-                                                if (!isset($aggregateNode['criteria'])) $aggregateNode['criteria'] = array();
-                                                if (!isset($aggregateNode['criteria'][$criteriaTarget])) $aggregateNode['criteria'][$criteriaTarget] = array();
+                                                if (!isset($aggregateNode['criteria'])) $aggregateNode['criteria'] = [];
+                                                if (!isset($aggregateNode['criteria'][$criteriaTarget])) $aggregateNode['criteria'][$criteriaTarget] = [];
                                                 $aggregateNode['criteria'][$criteriaTarget] = array_merge($aggregateNode['criteria'][$criteriaTarget], (array) $expression);
                                             }
                                         }
@@ -449,16 +449,16 @@ EOD;
                         }
                     }
                     if (isset($object->validation)) {
-                        $this->map[$class]['validation'] = array();
+                        $this->map[$class]['validation'] = [];
                         $validation = $object->validation[0];
-                        $validationNode = array();
+                        $validationNode = [];
                         foreach ($validation->attributes() as $attrName => $attr) {
                             $validationNode[$attrName]= (string) $attr;
                         }
                         if (isset($validation->rule)) {
-                            $validationNode['rules'] = array();
+                            $validationNode['rules'] = [];
                             foreach ($validation->rule as $rule) {
-                                $ruleNode = array();
+                                $ruleNode = [];
                                 $field= (string) $rule['field'];
                                 $name= (string) $rule['name'];
                                 foreach ($rule->attributes() as $attrName => $attr) {
@@ -568,7 +568,7 @@ EOD;
             $classDef['phpdoc-vars'] = $this->generateClassPhpDoc($this->map[$className]);
 
             $classDef= array_merge($model, $classDef);
-            $replaceVars= array ();
+            $replaceVars= [];
             foreach ($classDef as $varKey => $varValue) {
                 if (is_scalar($varValue)) $replaceVars["[+{$varKey}+]"]= $varValue;
             }

@@ -27,26 +27,26 @@ if ($transport->xpdo) {
 
     // Права встроенных эндпоинтов. Пополнять при добавлении эндпоинта в ядро:
     // резолвер идемпотентный, на upgrade добавит только новые.
-    $permissions = array(
+    $permissions = [
         'load'              => 'Загрузка namespace mxapi (обязательно для любой проверки прав)',
         'mxapi_auth_token'  => 'Выпуск токенов mxApi',
         'mxapi_auth_revoke' => 'Отзыв токенов mxApi',
         'mxapi_meta_read'   => 'Чтение каталога эндпоинтов и OpenAPI',
-    );
+    ];
 
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
         case xPDOTransport::ACTION_UPGRADE:
             /** @var modAccessPolicyTemplate $template */
-            $template = $modx->getObject('modAccessPolicyTemplate', array('name' => 'mxapiTemplate'));
+            $template = $modx->getObject('modAccessPolicyTemplate', ['name' => 'mxapiTemplate']);
             if (!$template) {
                 $template = $modx->newObject('modAccessPolicyTemplate');
-                $template->fromArray(array(
+                $template->fromArray([
                     'template_group' => 1,
                     'name' => 'mxapiTemplate',
                     'description' => 'Права эндпоинтов mxApi',
                     'lexicon' => 'permissions',
-                ), '', true, true);
+                ], '', true, true);
                 if (!$template->save()) {
                     $modx->log(modX::LOG_LEVEL_ERROR, '[mxapi] Не удалось создать шаблон политики mxapiTemplate.');
                     return true;
@@ -57,44 +57,44 @@ if ($transport->xpdo) {
             $templateId = (int)$template->get('id');
 
             foreach ($permissions as $name => $description) {
-                $exists = $modx->getObject('modAccessPermission', array(
+                $exists = $modx->getObject('modAccessPermission', [
                     'template' => $templateId,
                     'name' => $name,
-                ));
+                ]);
                 if ($exists) {
                     continue;
                 }
 
                 /** @var modAccessPermission $permission */
                 $permission = $modx->newObject('modAccessPermission');
-                $permission->fromArray(array(
+                $permission->fromArray([
                     'template' => $templateId,
                     'name' => $name,
                     'description' => $description,
                     'value' => 1,
-                ), '', true, true);
+                ], '', true, true);
                 $permission->save();
                 $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Добавлено право: ' . $name);
             }
 
             // Политика по умолчанию: все известные права включены.
-            $data = array();
+            $data = [];
             foreach (array_keys($permissions) as $name) {
                 $data[$name] = true;
             }
 
             /** @var modAccessPolicy $policy */
-            $policy = $modx->getObject('modAccessPolicy', array('name' => 'mxapiDefault'));
+            $policy = $modx->getObject('modAccessPolicy', ['name' => 'mxapiDefault']);
             if (!$policy) {
                 $policy = $modx->newObject('modAccessPolicy');
-                $policy->fromArray(array(
+                $policy->fromArray([
                     'name' => 'mxapiDefault',
                     'description' => 'Полный доступ к встроенным эндпоинтам mxApi.',
                     'parent' => 0,
                     'template' => $templateId,
                     'class' => '',
                     'lexicon' => 'permissions',
-                ), '', true, true);
+                ], '', true, true);
                 $policy->set('data', $data);
                 $policy->save();
                 $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Создана политика mxapiDefault.');
@@ -103,7 +103,7 @@ if ($transport->xpdo) {
                 // мог осознанно выключить.
                 $current = $policy->get('data');
                 if (!is_array($current)) {
-                    $current = array();
+                    $current = [];
                 }
                 $changed = false;
                 foreach ($data as $name => $value) {
@@ -119,7 +119,7 @@ if ($transport->xpdo) {
                 }
             }
 
-            $modx->getCacheManager()->refresh(array('system_settings' => array()));
+            $modx->getCacheManager()->refresh(['system_settings' => []]);
             break;
 
         case xPDOTransport::ACTION_UNINSTALL:

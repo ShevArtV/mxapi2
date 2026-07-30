@@ -32,16 +32,16 @@ class OpenApiEndpoint extends AbstractEndpoint
      */
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'meta.openapi',
             'title' => 'Описание OpenAPI',
             'description' => 'Спецификация OpenAPI 3.0, построенная по метаданным зарегистрированных эндпоинтов.',
             'path' => '/meta/openapi',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'meta.read',
             'permission' => 'mxapi_meta_read',
             'response_description' => 'Документ OpenAPI 3.0.',
-        );
+        ];
     }
 
     /**

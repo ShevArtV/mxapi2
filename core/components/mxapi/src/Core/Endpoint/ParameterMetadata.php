@@ -33,18 +33,18 @@ class ParameterMetadata
      */
     public function __construct(array $spec)
     {
-        $this->spec = array_merge(array(
+        $this->spec = array_merge([
             'name' => '',
             'in' => self::IN_QUERY,
             'type' => self::TYPE_STRING,
             'required' => false,
             'default' => null,
-            'enum' => array(),
+            'enum' => [],
             'min' => null,
             'max' => null,
             'description' => '',
             'example' => null,
-        ), $spec);
+        ], $spec);
     }
 
     /**
@@ -161,7 +161,7 @@ class ParameterMetadata
                 }
                 $normalized = strtolower((string)$value);
 
-                return in_array($normalized, array('1', 'true', 'yes', 'on'), true);
+                return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
 
             case self::TYPE_ARRAY:
                 if (is_array($value)) {

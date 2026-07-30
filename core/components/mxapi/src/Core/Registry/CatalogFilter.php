@@ -90,7 +90,7 @@ class CatalogFilter
     private static function normalizeMode($value)
     {
         $value = strtolower(trim((string)$value));
-        $allowed = array(self::MODE_ALL, self::MODE_SCOPE, self::MODE_PERMISSION);
+        $allowed = [self::MODE_ALL, self::MODE_SCOPE, self::MODE_PERMISSION];
 
         return in_array($value, $allowed, true) ? $value : self::MODE_ALL;
     }

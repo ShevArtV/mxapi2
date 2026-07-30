@@ -30,16 +30,16 @@ class EndpointsEndpoint extends AbstractEndpoint
      */
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'meta.endpoints',
             'title' => 'Каталог эндпоинтов',
             'description' => 'Список доступных эндпоинтов с параметрами, scope и правами.',
             'path' => '/meta/endpoints',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'meta.read',
             'permission' => 'mxapi_meta_read',
             'response_description' => 'Массив описаний эндпоинтов.',
-        );
+        ];
     }
 
     /**
@@ -47,18 +47,18 @@ class EndpointsEndpoint extends AbstractEndpoint
      */
     public function handle(Request $request, EndpointContext $context)
     {
-        $items = array();
+        $items = [];
         foreach (CatalogFilter::apply($this->registry, $context)->all() as $endpoint) {
             // Публичное представление: без имён процессоров и маппинга полей.
             $items[] = $endpoint->getMetadata()->toPublicArray();
         }
 
-        return Response::success($items, array(
+        return Response::success($items, [
             'count' => count($items),
             'route_prefix' => $context->getConfig()->get('route_prefix'),
             // Чтобы по короткому каталогу было понятно, что он урезан режимом,
             // а не что эндпоинтов на сайте нет.
             'filter' => $context->getConfig()->get('catalog_filter'),
-        ));
+        ]);
     }
 }

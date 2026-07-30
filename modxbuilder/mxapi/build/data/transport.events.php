@@ -9,4 +9,4 @@
  * @var string $namespace
  */
 
-return array();
+return [];

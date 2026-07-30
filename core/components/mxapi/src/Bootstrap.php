@@ -48,7 +48,7 @@ class Bootstrap
      */
     public static function createConfig(\modX $modx)
     {
-        $values = array(
+        $values = [
             'enabled' => (bool)$modx->getOption('mxapi.enabled', null, true),
             'route_prefix' => $modx->getOption('mxapi.route_prefix', null, '/mxapi/v1'),
             'context' => $modx->getOption('mxapi.context', null, 'mgr'),
@@ -63,7 +63,7 @@ class Bootstrap
             'log_lifetime' => (int)$modx->getOption('mxapi.log_lifetime', null, 2592000),
             'cors_origins' => $modx->getOption('mxapi.cors_origins', null, ''),
             'debug' => (bool)$modx->getOption('mxapi.debug', null, false),
-        );
+        ];
 
         $configFile = $modx->getOption('core_path') . 'config/mxapi.php';
         if (is_readable($configFile)) {
@@ -86,11 +86,11 @@ class Bootstrap
     {
         $tokenService = $kernel->getTokenService();
 
-        return array(
+        return [
             new TokenEndpoint($tokenService),
             new RevokeEndpoint($tokenService),
             new EndpointsEndpoint($kernel->getRegistry()),
             new OpenApiEndpoint($kernel->getRegistry()),
-        );
+        ];
     }
 }

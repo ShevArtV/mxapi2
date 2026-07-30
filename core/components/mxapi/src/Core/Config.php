@@ -19,7 +19,7 @@ class Config
     private $values;
 
     /** @var array */
-    private static $defaults = array(
+    private static $defaults = [
         'enabled' => true,
         'route_prefix' => '/mxapi/v1',
         // Контекст MODX по умолчанию: в нём проверяются права и выполняются
@@ -33,20 +33,20 @@ class Config
         'default_limit' => 100,
         'max_limit' => 1000,
         'rate_limit_per_minute' => 120,
-        'trusted_proxies' => array(),
-        'providers' => array(),
-        'middleware' => array(),
-        'endpoints' => array(),
-        'route_aliases' => array(),
+        'trusted_proxies' => [],
+        'providers' => [],
+        'middleware' => [],
+        'endpoints' => [],
+        'route_aliases' => [],
         // Что показывать в каталоге и OpenAPI: all | scope | permission.
         'catalog_filter' => 'all',
         'log_reads' => false,
         'log_lifetime' => 2592000,
-        'cors_origins' => array(),
+        'cors_origins' => [],
         'debug' => false,
-    );
+    ];
 
-    public function __construct(array $values = array())
+    public function __construct(array $values = [])
     {
         $this->values = array_merge(self::$defaults, $values);
     }
@@ -92,17 +92,17 @@ class Config
      */
     public function getList($key)
     {
-        $value = $this->get($key, array());
+        $value = $this->get($key, []);
         if (is_array($value)) {
-            return array_values(array_filter(array_map('trim', $value), array($this, 'notEmpty')));
+            return array_values(array_filter(array_map('trim', $value), [$this, 'notEmpty']));
         }
 
         $items = preg_split('/[\s,]+/', trim((string)$value));
         if (!is_array($items)) {
-            return array();
+            return [];
         }
 
-        return array_values(array_filter(array_map('trim', $items), array($this, 'notEmpty')));
+        return array_values(array_filter(array_map('trim', $items), [$this, 'notEmpty']));
     }
 
     /**

@@ -55,10 +55,10 @@ class MaintenanceService
                 : 0;
 
             if ($tokens > 0 || $logs > 0) {
-                $this->platform->log('info', 'Уборка mxApi', array(
+                $this->platform->log('info', 'Уборка mxApi', [
                     'tokens' => $tokens,
                     'log_entries' => $logs,
-                ));
+                ]);
             }
         } catch (\Exception $exception) {
             // Уборка не должна влиять на ответ клиенту.

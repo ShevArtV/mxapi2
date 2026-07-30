@@ -38,7 +38,7 @@ class Kernel
     private $tokenService;
 
     /** @var MiddlewareInterface[] */
-    private $middleware = array();
+    private $middleware = [];
 
     public function __construct(PlatformInterface $platform, Config $config)
     {
@@ -114,7 +114,7 @@ class Kernel
             $this->registerProvider($class);
         }
 
-        foreach ((array)$this->config->get('endpoints', array()) as $spec) {
+        foreach ((array)$this->config->get('endpoints', []) as $spec) {
             $endpoint = $this->instantiateEndpoint($spec);
             if ($endpoint) {
                 $this->registry->add($endpoint);
@@ -138,13 +138,13 @@ class Kernel
                 throw ApiException::serviceDisabled();
             }
 
-            $this->platform->invokeEvent('mxApiOnBeforeRequest', array(
+            $this->platform->invokeEvent('mxApiOnBeforeRequest', [
                 'method' => $request->getMethod(),
                 'path' => $request->getPath(),
                 'ip' => $request->getIp(),
-            ));
+            ]);
 
-            $router = new Router($this->registry, (array)$this->config->get('route_aliases', array()));
+            $router = new Router($this->registry, (array)$this->config->get('route_aliases', []));
             $match = $router->match($request);
 
             $endpoint = $match->getEndpoint();
@@ -170,18 +170,18 @@ class Kernel
                 $this->tokenService->assertPermission($auth->getUser(), $metadata->getPermission());
             }
 
-            $this->platform->invokeEvent('mxApiOnBeforeEndpointRun', array(
+            $this->platform->invokeEvent('mxApiOnBeforeEndpointRun', [
                 'endpoint' => $metadata->getId(),
                 'user' => $auth ? $auth->getUser()->getId() : 0,
-            ));
+            ]);
 
             $endpointContext = new EndpointContext($this->platform, $this->config, $auth, $metadata);
             $response = $this->runPipeline($request, $endpointContext, $endpoint);
 
-            $this->platform->invokeEvent('mxApiOnAfterEndpointRun', array(
+            $this->platform->invokeEvent('mxApiOnAfterEndpointRun', [
                 'endpoint' => $metadata->getId(),
                 'status' => $response->getStatus(),
-            ));
+            ]);
 
             $this->logCall($request, $metadata, $auth, $response->getStatus(), '', $startedAt, $contextKey, $response);
             $this->runMaintenance();
@@ -194,10 +194,10 @@ class Kernel
         } catch (\Exception $exception) {
             // Внутренние подробности наружу не отдаём: они уходят в лог, клиент
             // получает нейтральный internal_error (кроме режима отладки).
-            $this->platform->log('error', 'Необработанное исключение: ' . $exception->getMessage(), array(
+            $this->platform->log('error', 'Необработанное исключение: ' . $exception->getMessage(), [
                 'endpoint' => $metadata ? $metadata->getId() : '',
                 'file' => $exception->getFile() . ':' . $exception->getLine(),
-            ));
+            ]);
 
             $this->logCall($request, $metadata, $auth, 500, 'internal_error', $startedAt, $contextKey);
 
@@ -331,9 +331,9 @@ class Kernel
 
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($encoded === false || strlen($encoded) > 262144) {
-            $this->platform->log('warning', 'Ответ слишком велик для повтора по ключу идемпотентности', array(
+            $this->platform->log('warning', 'Ответ слишком велик для повтора по ключу идемпотентности', [
                 'idempotency_key' => $idempotencyKey,
-            ));
+            ]);
 
             return null;
         }
@@ -366,10 +366,10 @@ class Kernel
                 ->withHeader('Vary', 'Origin');
         }
 
-        $this->platform->invokeEvent('mxApiOnResponse', array(
+        $this->platform->invokeEvent('mxApiOnResponse', [
             'status' => $response->getStatus(),
             'path' => $request->getPath(),
-        ));
+        ]);
 
         return $response;
     }
@@ -384,9 +384,9 @@ class Kernel
         // Пакеты могут зарегистрироваться на событии — тогда прописывать их в
         // настройке вручную не нужно. Обработчик возвращает имя класса
         // провайдера, готовый объект провайдера или список того и другого.
-        $results = $this->platform->invokeEvent('mxApiOnRegisterEndpoints', array());
+        $results = $this->platform->invokeEvent('mxApiOnRegisterEndpoints', []);
         foreach ($results as $result) {
-            foreach (is_array($result) ? $result : array($result) as $item) {
+            foreach (is_array($result) ? $result : [$result] as $item) {
                 if ($item instanceof ProviderInterface) {
                     $this->useProvider($item);
                     continue;
@@ -511,7 +511,7 @@ class Kernel
             }
         }
 
-        $this->platform->getLogRepository()->write(array(
+        $this->platform->getLogRepository()->write([
             'createdon' => $this->platform->now(),
             'client_id' => $auth ? $auth->getClientId() : 0,
             'user_id' => $auth ? $auth->getUser()->getId() : 0,
@@ -529,6 +529,6 @@ class Kernel
             'idempotency_key' => $idempotencyKey,
             'request_summary' => $params,
             'response_summary' => $this->summarizeResponse($response, $idempotencyKey, $isWrite, $status),
-        ));
+        ]);
     }
 }

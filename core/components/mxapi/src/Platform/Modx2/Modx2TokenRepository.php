@@ -24,7 +24,7 @@ class Modx2TokenRepository implements TokenRepositoryInterface
     public function findByHash($tokenHash)
     {
         /** @var \xPDOObject $token */
-        $token = $this->modx->getObject('mxApiToken', array('token_hash' => $tokenHash));
+        $token = $this->modx->getObject('mxApiToken', ['token_hash' => $tokenHash]);
 
         return $token ? new TokenRecord($token->toArray()) : null;
     }
@@ -36,19 +36,19 @@ class Modx2TokenRepository implements TokenRepositoryInterface
     {
         /** @var \xPDOObject $token */
         $token = $this->modx->newObject('mxApiToken');
-        $token->fromArray(array(
+        $token->fromArray([
             'token_hash' => $data['token_hash'],
             'client_id' => isset($data['client_id']) ? (int)$data['client_id'] : 0,
             'user_id' => (int)$data['user_id'],
             'username' => (string)$data['username'],
-            'scopes' => isset($data['scopes']) ? $data['scopes'] : array(),
+            'scopes' => isset($data['scopes']) ? $data['scopes'] : [],
             'createdon' => (int)$data['createdon'],
             'expireson' => (int)$data['expireson'],
             'last_usedon' => 0,
             'revokedon' => 0,
             'user_agent' => isset($data['user_agent']) ? (string)$data['user_agent'] : '',
             'ip' => isset($data['ip']) ? (string)$data['ip'] : '',
-        ), '', true, true);
+        ], '', true, true);
 
         if (!$token->save()) {
             $this->modx->log(\modX::LOG_LEVEL_ERROR, '[mxapi] Не удалось сохранить токен.');
@@ -65,7 +65,7 @@ class Modx2TokenRepository implements TokenRepositoryInterface
     public function touch($tokenHash, $timestamp)
     {
         /** @var \xPDOObject $token */
-        $token = $this->modx->getObject('mxApiToken', array('token_hash' => $tokenHash));
+        $token = $this->modx->getObject('mxApiToken', ['token_hash' => $tokenHash]);
         if (!$token) {
             return;
         }
@@ -80,7 +80,7 @@ class Modx2TokenRepository implements TokenRepositoryInterface
     public function revoke($tokenHash, $timestamp)
     {
         /** @var \xPDOObject $token */
-        $token = $this->modx->getObject('mxApiToken', array('token_hash' => $tokenHash));
+        $token = $this->modx->getObject('mxApiToken', ['token_hash' => $tokenHash]);
         if (!$token || (int)$token->get('revokedon') > 0) {
             return false;
         }
@@ -96,7 +96,7 @@ class Modx2TokenRepository implements TokenRepositoryInterface
     public function purgeExpired($before)
     {
         $query = $this->modx->newQuery('mxApiToken');
-        $query->where(array('expireson:<' => (int)$before, 'expireson:!=' => 0));
+        $query->where(['expireson:<' => (int)$before, 'expireson:!=' => 0]);
 
         $count = $this->modx->getCount('mxApiToken', $query);
         if ($count > 0) {

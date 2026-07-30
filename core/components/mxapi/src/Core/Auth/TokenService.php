@@ -251,7 +251,7 @@ class TokenService
         $scopes = preg_split('/[\s,]+/', $scope);
         $scopes = is_array($scopes) ? array_values(array_filter($scopes, function ($item) {
             return $item !== '';
-        })) : array();
+        })) : [];
 
         if (empty($scopes)) {
             throw ApiException::invalidScope('(пусто)');
@@ -293,7 +293,7 @@ class TokenService
         $now = $this->platform->now();
         $expires = $never ? 0 : $now + $ttl;
 
-        $record = $this->platform->getTokenRepository()->create(array(
+        $record = $this->platform->getTokenRepository()->create([
             'token_hash' => $this->hash($plainToken),
             'client_id' => $client ? $client->getId() : 0,
             'user_id' => $user->getId(),
@@ -303,13 +303,13 @@ class TokenService
             'expireson' => $expires,
             'user_agent' => substr($request->getHeader('user-agent'), 0, 255),
             'ip' => substr($request->getIp(), 0, 45),
-        ));
+        ]);
 
         if (!$record) {
             throw ApiException::internalError('Не удалось сохранить токен.');
         }
 
-        return array(
+        return [
             'access_token' => $plainToken,
             'token_type' => 'Bearer',
             // Для бессрочного токена expires_in = 0, expires_at = null: тот же
@@ -318,7 +318,7 @@ class TokenService
             'expires_at' => $never ? null : gmdate('c', $expires),
             'scope' => implode(' ', $scopes),
             'user' => $user->toArray(),
-        );
+        ];
     }
 
     /**

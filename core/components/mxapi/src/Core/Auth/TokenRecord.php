@@ -48,12 +48,12 @@ class TokenRecord
         $this->expireson = isset($row['expireson']) ? (int)$row['expireson'] : 0;
         $this->revokedon = isset($row['revokedon']) ? (int)$row['revokedon'] : 0;
 
-        $scopes = isset($row['scopes']) ? $row['scopes'] : array();
+        $scopes = isset($row['scopes']) ? $row['scopes'] : [];
         if (is_string($scopes)) {
             $decoded = json_decode($scopes, true);
-            $scopes = is_array($decoded) ? $decoded : array();
+            $scopes = is_array($decoded) ? $decoded : [];
         }
-        $this->scopes = is_array($scopes) ? $scopes : array();
+        $this->scopes = is_array($scopes) ? $scopes : [];
     }
 
     /**

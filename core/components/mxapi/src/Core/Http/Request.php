@@ -31,9 +31,9 @@ class Request
     private $ip;
 
     /** @var array Параметры, вынутые роутером из пути (/orders/{id}). */
-    private $pathParams = array();
+    private $pathParams = [];
 
-    public function __construct($method, $path, array $query = array(), array $body = array(), array $headers = array(), $ip = '')
+    public function __construct($method, $path, array $query = [], array $body = [], array $headers = [], $ip = '')
     {
         $this->method = strtoupper($method);
         $this->path = $path;
@@ -54,7 +54,7 @@ class Request
      * @param array $trustedProxies
      * @return self
      */
-    public static function fromGlobals($routePrefix = '', array $trustedProxies = array())
+    public static function fromGlobals($routePrefix = '', array $trustedProxies = [])
     {
         $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
         $headers = self::collectHeaders();
@@ -196,7 +196,7 @@ class Request
      */
     private static function collectHeaders()
     {
-        $headers = array();
+        $headers = [];
 
         if (function_exists('getallheaders')) {
             $raw = getallheaders();
@@ -238,12 +238,12 @@ class Request
     private static function parseBody($method, array $headers)
     {
         if ($method === 'GET' || $method === 'HEAD') {
-            return array();
+            return [];
         }
 
         $raw = file_get_contents('php://input');
         if ($raw === false || trim($raw) === '') {
-            return is_array($_POST) ? $_POST : array();
+            return is_array($_POST) ? $_POST : [];
         }
 
         $contentType = isset($headers['content-type']) ? $headers['content-type'] : '';
@@ -260,10 +260,10 @@ class Request
             return $_POST;
         }
 
-        $parsed = array();
+        $parsed = [];
         parse_str($raw, $parsed);
 
-        return is_array($parsed) ? $parsed : array();
+        return is_array($parsed) ? $parsed : [];
     }
 
     /**

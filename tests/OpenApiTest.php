@@ -28,7 +28,7 @@ class OpenApiTest extends TestCase
         $registry->add(new CreateEndpoint());
         $registry->add(new HiddenEndpoint());
 
-        $generator = new OpenApiGenerator($registry, new Config(array('route_prefix' => '/mxapi/v1')));
+        $generator = new OpenApiGenerator($registry, new Config(['route_prefix' => '/mxapi/v1']));
         $this->document = $generator->generate();
     }
 
@@ -87,7 +87,7 @@ class OpenApiTest extends TestCase
 
         $schema = $operation['requestBody']['content']['application/json']['schema'];
         $this->assertArrayHasKey('name', $schema['properties']);
-        $this->assertSame(array('name'), $schema['required']);
+        $this->assertSame(['name'], $schema['required']);
         $this->assertTrue($operation['requestBody']['required']);
     }
 
@@ -95,7 +95,7 @@ class OpenApiTest extends TestCase
     {
         $operation = $this->document['paths']['/catalog/items/{id}']['get'];
 
-        $this->assertSame(array(array('bearerAuth' => array())), $operation['security']);
+        $this->assertSame([['bearerAuth' => []]], $operation['security']);
         $this->assertStringContainsString('catalog.read', $operation['description']);
         $this->assertStringContainsString('mxapi_catalog_read', $operation['description']);
         $this->assertArrayHasKey('401', $operation['responses']);
@@ -122,24 +122,24 @@ class CatalogEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.read',
             'title' => 'Позиция каталога',
             'description' => 'Возвращает позицию каталога.',
             'path' => '/catalog/items[/{id:\d+}]',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'catalog.read',
             'permission' => 'mxapi_catalog_read',
             'provider' => 'demo',
-            'parameters' => array(
-                array('name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 20, 'max' => 100),
-            ),
-        );
+            'parameters' => [
+                ['name' => 'limit', 'type' => ParameterMetadata::TYPE_INTEGER, 'default' => 20, 'max' => 100],
+            ],
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }
 
@@ -147,28 +147,28 @@ class CreateEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'catalog.create',
             'title' => 'Создание позиции',
             'path' => '/catalog/items',
-            'methods' => array('POST'),
+            'methods' => ['POST'],
             'scope' => 'catalog.write',
             'permission' => 'mxapi_catalog_write',
             'write' => true,
-            'parameters' => array(
-                array(
+            'parameters' => [
+                [
                     'name' => 'name',
                     'in' => ParameterMetadata::IN_BODY,
                     'type' => ParameterMetadata::TYPE_STRING,
                     'required' => true,
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }
 
@@ -176,18 +176,18 @@ class HiddenEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'internal.thing',
             'path' => '/internal/thing',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'context' => EndpointMetadata::CONTEXT_INTERNAL,
             'scope' => 'internal.read',
             'permission' => 'mxapi_internal_read',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array());
+        return Response::success([]);
     }
 }

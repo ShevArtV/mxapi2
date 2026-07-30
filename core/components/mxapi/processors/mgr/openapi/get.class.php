@@ -29,10 +29,10 @@ class mxApiOpenApiGetProcessor extends modProcessor
         $kernel = \MxApi\Bootstrap::createKernel($this->modx);
         $generator = new \MxApi\Core\OpenApi\OpenApiGenerator($kernel->getRegistry(), $kernel->getConfig());
 
-        $document = $generator->generate(array(
+        $document = $generator->generate([
             'title' => $this->modx->getOption('site_name', null, 'mxApi'),
             'server' => rtrim($this->modx->getOption('site_url'), '/') . $kernel->getConfig()->get('route_prefix'),
-        ));
+        ]);
 
         $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
@@ -45,7 +45,7 @@ class mxApiOpenApiGetProcessor extends modProcessor
             exit;
         }
 
-        return $this->success('', array('openapi' => $json));
+        return $this->success('', ['openapi' => $json]);
     }
 }
 

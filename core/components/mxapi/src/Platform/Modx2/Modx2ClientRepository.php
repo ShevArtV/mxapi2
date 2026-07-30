@@ -24,7 +24,7 @@ class Modx2ClientRepository implements ClientRepositoryInterface
     public function findByKey($clientKey)
     {
         /** @var \xPDOObject $client */
-        $client = $this->modx->getObject('mxApiClient', array('client_key' => $clientKey));
+        $client = $this->modx->getObject('mxApiClient', ['client_key' => $clientKey]);
 
         return $client ? new ClientRecord($client->toArray()) : null;
     }
@@ -35,7 +35,7 @@ class Modx2ClientRepository implements ClientRepositoryInterface
     public function findById($id)
     {
         /** @var \xPDOObject $client */
-        $client = $this->modx->getObject('mxApiClient', array('id' => (int)$id));
+        $client = $this->modx->getObject('mxApiClient', ['id' => (int)$id]);
 
         return $client ? new ClientRecord($client->toArray()) : null;
     }

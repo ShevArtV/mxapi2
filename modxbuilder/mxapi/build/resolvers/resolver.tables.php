@@ -27,19 +27,19 @@ if ($transport->xpdo) {
 
             // Поля, добавленные после первого релиза: класс => список полей.
             // Пополнять при изменении схемы; на чистой установке цикл ничего не делает.
-            $addedFields = array(
+            $addedFields = [
                 // Схема 1.2: allow-list контекстов у клиента и контекст в журнале.
                 // Схема 1.3: собственный TTL токенов клиента.
-                'mxApiClient' => array('contexts', 'token_ttl'),
-                'mxApiToken' => array(),
-                'mxApiLog' => array('context'),
-            );
+                'mxApiClient' => ['contexts', 'token_ttl'],
+                'mxApiToken' => [],
+                'mxApiLog' => ['context'],
+            ];
 
-            foreach (array('mxApiClient', 'mxApiToken', 'mxApiLog') as $class) {
+            foreach (['mxApiClient', 'mxApiToken', 'mxApiLog'] as $class) {
                 $manager->createObjectContainer($class);
 
                 $table = $modx->getTableName($class);
-                $cols = array();
+                $cols = [];
                 if ($stmt = $modx->query("SHOW COLUMNS FROM {$table}")) {
                     foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $column) {
                         $cols[strtolower($column)] = true;

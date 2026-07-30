@@ -40,7 +40,7 @@ class Modx2Platform implements PlatformInterface
     private $packageLoaded = false;
 
     /** @var array Кэш результатов проверки прав в рамках запроса. */
-    private $permissionCache = array();
+    private $permissionCache = [];
 
     public function __construct(\modX $modx)
     {
@@ -79,7 +79,7 @@ class Modx2Platform implements PlatformInterface
      * уходят в него (там их удобно фильтровать по тэгу), иначе пишем в штатный
      * журнал ошибок MODX. Проверяем сервис, а не файл на диске.
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
         $message = '[mxapi] ' . $message;
         if (!empty($context)) {
@@ -92,12 +92,12 @@ class Modx2Platform implements PlatformInterface
             return;
         }
 
-        $levels = array(
+        $levels = [
             'debug' => \modX::LOG_LEVEL_DEBUG,
             'info' => \modX::LOG_LEVEL_INFO,
             'warning' => \modX::LOG_LEVEL_WARN,
             'error' => \modX::LOG_LEVEL_ERROR,
-        );
+        ];
         $modxLevel = isset($levels[$level]) ? $levels[$level] : \modX::LOG_LEVEL_ERROR;
 
         $this->modx->log($modxLevel, $message);
@@ -109,7 +109,7 @@ class Modx2Platform implements PlatformInterface
     public function findUserByUsername($username)
     {
         /** @var \modUser $user */
-        $user = $this->modx->getObject('modUser', array('username' => $username));
+        $user = $this->modx->getObject('modUser', ['username' => $username]);
 
         return $user ? $this->toPlatformUser($user) : null;
     }
@@ -120,7 +120,7 @@ class Modx2Platform implements PlatformInterface
     public function findUserById($id)
     {
         /** @var \modUser $user */
-        $user = $this->modx->getObject('modUser', array('id' => (int)$id));
+        $user = $this->modx->getObject('modUser', ['id' => (int)$id]);
 
         return $user ? $this->toPlatformUser($user) : null;
     }
@@ -170,7 +170,7 @@ class Modx2Platform implements PlatformInterface
         }
 
         $this->runtimeUser = null;
-        $this->permissionCache = array();
+        $this->permissionCache = [];
 
         if ($this->runtimePlatformUser) {
             $this->setRuntimeUser($this->runtimePlatformUser);
@@ -196,10 +196,10 @@ class Modx2Platform implements PlatformInterface
         $this->runtimeUser = $modxUser;
         $this->runtimePlatformUser = $user;
         $this->modx->user = $modxUser;
-        $this->permissionCache = array();
+        $this->permissionCache = [];
 
         $this->ensureSession();
-        $modxUser->getAttributes(array(), $this->getContextKey(), true);
+        $modxUser->getAttributes([], $this->getContextKey(), true);
     }
 
     /**
@@ -226,23 +226,23 @@ class Modx2Platform implements PlatformInterface
     /**
      * {@inheritdoc}
      */
-    public function runProcessor($processor, array $properties = array(), array $options = array())
+    public function runProcessor($processor, array $properties = [], array $options = [])
     {
         $response = $this->modx->runProcessor($processor, $properties, $options);
 
         if (!$response instanceof \modProcessorResponse) {
             // runProcessor возвращает '' , если файла процессора нет.
-            return new ProcessorResult(false, array(), 'Процессор не найден или вернул некорректный ответ.');
+            return new ProcessorResult(false, [], 'Процессор не найден или вернул некорректный ответ.');
         }
 
         $raw = $response->getResponse();
         $payload = $raw;
         if (is_string($payload)) {
             $decoded = $this->modx->fromJSON($payload);
-            $payload = is_array($decoded) ? $decoded : array('response' => $payload);
+            $payload = is_array($decoded) ? $decoded : ['response' => $payload];
         }
         if (!is_array($payload)) {
-            $payload = array('response' => $payload);
+            $payload = ['response' => $payload];
         }
 
         // ⚠️ modProcessorResponse::isError() проверяет ключ success ТОЛЬКО когда
@@ -261,7 +261,7 @@ class Modx2Platform implements PlatformInterface
             $message = 'Ошибка процессора.';
         }
 
-        $errors = array();
+        $errors = [];
         if (isset($payload['errors']) && is_array($payload['errors'])) {
             $errors = $payload['errors'];
         }
@@ -272,19 +272,19 @@ class Modx2Platform implements PlatformInterface
     /**
      * {@inheritdoc}
      */
-    public function invokeEvent($event, array $params = array())
+    public function invokeEvent($event, array $params = [])
     {
         $result = $this->modx->invokeEvent($event, $params);
 
-        return is_array($result) ? $result : array();
+        return is_array($result) ? $result : [];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function cacheGet($key, array $options = array())
+    public function cacheGet($key, array $options = [])
     {
-        $options = array_merge(array(\xPDO::OPT_CACHE_KEY => 'mxapi'), $options);
+        $options = array_merge([\xPDO::OPT_CACHE_KEY => 'mxapi'], $options);
         $value = $this->modx->getCacheManager()->get($key, $options);
 
         return $value === false ? null : $value;
@@ -293,9 +293,9 @@ class Modx2Platform implements PlatformInterface
     /**
      * {@inheritdoc}
      */
-    public function cacheSet($key, $value, $lifetime = 0, array $options = array())
+    public function cacheSet($key, $value, $lifetime = 0, array $options = [])
     {
-        $options = array_merge(array(\xPDO::OPT_CACHE_KEY => 'mxapi'), $options);
+        $options = array_merge([\xPDO::OPT_CACHE_KEY => 'mxapi'], $options);
 
         return (bool)$this->modx->getCacheManager()->set($key, $value, (int)$lifetime, $options);
     }
@@ -354,16 +354,16 @@ class Modx2Platform implements PlatformInterface
         // прав молча превращается в «разрешено». Fail-closed: нет проверяемой
         // сессии — нет доступа.
         if (!$this->ensureSession()) {
-            $this->log('error', 'Состояние сессии не позволяет проверить права — доступ запрещён.', array(
+            $this->log('error', 'Состояние сессии не позволяет проверить права — доступ запрещён.', [
                 'permission' => $permission,
                 'context' => $this->getContextKey(),
-            ));
+            ]);
 
             return false;
         }
 
         /** @var \modNamespace $namespace */
-        $namespace = $this->modx->getObject('modNamespace', array('name' => 'mxapi'));
+        $namespace = $this->modx->getObject('modNamespace', ['name' => 'mxapi']);
         if (!$namespace) {
             $this->log('error', 'Namespace mxapi не найден — проверка прав невозможна.');
 
@@ -418,7 +418,7 @@ class Modx2Platform implements PlatformInterface
      */
     private function permissionIsSeeded($permission)
     {
-        return $this->modx->getCount('modAccessPermission', array('name' => $permission)) > 0;
+        return $this->modx->getCount('modAccessPermission', ['name' => $permission]) > 0;
     }
 
     /**
@@ -426,10 +426,10 @@ class Modx2Platform implements PlatformInterface
      */
     private function namespaceHasAcl()
     {
-        return $this->modx->getCount('modAccessNamespace', array(
+        return $this->modx->getCount('modAccessNamespace', [
             'target' => 'mxapi',
             'principal_class' => 'modUserGroup',
-        )) > 0;
+        ]) > 0;
     }
 
     /**
@@ -470,7 +470,7 @@ class Modx2Platform implements PlatformInterface
         }
 
         /** @var \modUser $user */
-        $user = $this->modx->getObject('modUser', array('id' => (int)$id));
+        $user = $this->modx->getObject('modUser', ['id' => (int)$id]);
 
         return $user ? $user : null;
     }

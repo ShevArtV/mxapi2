@@ -10,7 +10,7 @@ class modxBuilder
      * @var modX $modx
      */
     public $modx;
-    public $config = array();
+    public $config = [];
 
     /** @var modPackageBuilder */
     public $builder;
@@ -21,8 +21,8 @@ class modxBuilder
     public function __construct(&$modx, $config)
     {
         $this->modx = &$modx;
-        $this->config = array(//List default settings
-        );
+        $this->config = [//List default settings
+        ];
         $this->config = array_merge($this->config, $config);
     }
 
@@ -73,7 +73,7 @@ class modxBuilder
         }
 
         // Create directories if necessary
-        $dirs = array($this->config["package_dir"], $this->config["schema_dir"], $this->config["mysql_class_dir"], $this->config["class_dir"]);
+        $dirs = [$this->config["package_dir"], $this->config["schema_dir"], $this->config["mysql_class_dir"], $this->config["class_dir"]];
 
         foreach ($dirs as $d)
         {
@@ -200,11 +200,11 @@ class modxBuilder
      * @return bool
      */
     public function addSnippetsToCategory(&$category,$snippets,&$attr,$updateObject = true){
-        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Snippets'] = array(
+        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Snippets'] = [
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
             xPDOTransport::UNIQUE_KEY => 'name',
-        );
+        ];
         return $category->addMany($snippets);
     }
 
@@ -216,11 +216,11 @@ class modxBuilder
      * @return bool
      */
     public function addChunksToCategory(&$category,$chunks,&$attr,$updateObject = true){
-        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Chunks'] = array(
+        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Chunks'] = [
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
             xPDOTransport::UNIQUE_KEY => 'name',
-        );
+        ];
         return $category->addMany($chunks);
     }
 
@@ -232,11 +232,11 @@ class modxBuilder
      * @return bool
      */
     public function addTemplatesToCategory(&$category,$templates,&$attr,$updateObject = true){
-        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Templates'] = array(
+        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Templates'] = [
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
             xPDOTransport::UNIQUE_KEY => 'templatename',
-        );
+        ];
         return $category->addMany($templates);
     }
 
@@ -248,19 +248,19 @@ class modxBuilder
      * @return bool
      */
     public function addPluginsToCategory(&$category, $plugins, &$attr, $updateObject = true){
-        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Plugins'] = array(
+        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Plugins'] = [
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
             xPDOTransport::UNIQUE_KEY => 'name',
             xPDOTransport::RELATED_OBJECTS => true,
-            xPDOTransport::RELATED_OBJECT_ATTRIBUTES => array(
-                'PluginEvents' => array(
+            xPDOTransport::RELATED_OBJECT_ATTRIBUTES => [
+                'PluginEvents' => [
                     xPDOTransport::PRESERVE_KEYS => true,
                     xPDOTransport::UPDATE_OBJECT => $updateObject,
                     xPDOTransport::UNIQUE_KEY => ['pluginid', 'event'],
-                )
-            )
-        );
+                ]
+            ]
+        ];
         return $category->addMany($plugins);
     }
 
@@ -272,19 +272,19 @@ class modxBuilder
      * @return bool
      */
     public function addTVsToCategory(&$category, $tvs, &$attr, $updateObject = true){
-        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['TemplateVars'] = array(
+        $attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['TemplateVars'] = [
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
             xPDOTransport::UNIQUE_KEY => 'name',
             xPDOTransport::RELATED_OBJECTS => true,
-            xPDOTransport::RELATED_OBJECT_ATTRIBUTES => array(
-                'TemplateVarTemplates' => array(
+            xPDOTransport::RELATED_OBJECT_ATTRIBUTES => [
+                'TemplateVarTemplates' => [
                     xPDOTransport::PRESERVE_KEYS => true,
                     xPDOTransport::UPDATE_OBJECT => $updateObject,
                     xPDOTransport::UNIQUE_KEY => ['tmplvarid','templateid'],
-                )
-            )
-        );
+                ]
+            ]
+        ];
         return $category->addMany($tvs);
     }
 
@@ -317,14 +317,14 @@ class modxBuilder
      * @param bool $updateObject
      * @return bool
      */
-    public function addSystemSettings($settings,$attr = array(), $updateObject = false){
+    public function addSystemSettings($settings,$attr = [], $updateObject = false){
         $noError = true;
 
-        $sysSettingsAttr = array_merge(array(
+        $sysSettingsAttr = array_merge([
             xPDOTransport::UNIQUE_KEY => 'key',
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
-        ),$attr);
+        ],$attr);
         foreach ($settings as $setting) {
             $vehicle = $this->builder->createVehicle($setting,$sysSettingsAttr);
             $noError = $noError && $this->builder->putVehicle($vehicle);
@@ -338,14 +338,14 @@ class modxBuilder
      * @param bool $updateObject
      * @return bool
      */
-    public function addSystemEvents($events, $attr = array(), $updateObject = false){
+    public function addSystemEvents($events, $attr = [], $updateObject = false){
         $noError = true;
 
-        $sysSettingsAttr = array_merge(array(
+        $sysSettingsAttr = array_merge([
             xPDOTransport::UNIQUE_KEY => 'name',
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
-        ),$attr);
+        ],$attr);
         foreach ($events as $event) {
             $vehicle = $this->builder->createVehicle($event,$sysSettingsAttr);
             $noError = $noError && $this->builder->putVehicle($vehicle);
@@ -359,14 +359,14 @@ class modxBuilder
      * @param bool $updateObject
      * @return bool
      */
-    public function addMenus($menus,$attr = array(), $updateObject = true){
+    public function addMenus($menus,$attr = [], $updateObject = true){
         $noError = true;
 
-        $menuSettingsArray = array_merge(array(
+        $menuSettingsArray = array_merge([
             xPDOTransport::UNIQUE_KEY => 'text',
             xPDOTransport::PRESERVE_KEYS => true,
             xPDOTransport::UPDATE_OBJECT => $updateObject,
-        ),$attr);
+        ],$attr);
         foreach ($menus as $menu) {
             $vehicle = $this->builder->createVehicle($menu,$menuSettingsArray);
             $noError = $noError && $this->builder->putVehicle($vehicle);
@@ -375,7 +375,7 @@ class modxBuilder
     }
 
     public function addPackageAttributes(){
-        $attrs = array();
+        $attrs = [];
         if(file_exists($this->config['source_docs'] . 'changelog.txt')){
             $attrs['changelog'] = file_get_contents($this->config['source_docs'] . 'changelog.txt');
         }
@@ -386,7 +386,7 @@ class modxBuilder
             $attrs['readme'] = file_get_contents($this->config['source_docs'] . 'readme.txt');
         }
         if(file_exists($this->config['data'] . 'setup.options.php')){
-            $attrs['setup-options'] = array('source' => $this->config['data'] . 'setup.options.php');
+            $attrs['setup-options'] = ['source' => $this->config['data'] . 'setup.options.php'];
         }
         if(file_exists($this->config['data'] . 'setup.requires.php')){
             $requires = include $this->config['data'] . 'setup.requires.php';
@@ -414,12 +414,12 @@ class modxBuilder
         $category->set('category',$this->config['real_package_name']);
 
         // Define attributes for category transport
-        $categoryAttr = array(
+        $categoryAttr = [
             xPDOTransport::UNIQUE_KEY => 'category',
             xPDOTransport::PRESERVE_KEYS => false,
             xPDOTransport::UPDATE_OBJECT => true,
             xPDOTransport::RELATED_OBJECTS => true,
-        );
+        ];
 
         //Define snippets
         /** @var modSnippet $snippets */

@@ -16,27 +16,27 @@ if ($transport->xpdo) {
     /** @var modX $modx */
     $modx =& $transport->xpdo;
 
-    $events = array(
+    $events = [
         'mxApiOnRegisterEndpoints',
         'mxApiOnBeforeRequest',
         'mxApiOnBeforeEndpointRun',
         'mxApiOnAfterEndpointRun',
         'mxApiOnResponse',
-    );
+    ];
 
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
         case xPDOTransport::ACTION_UPGRADE:
             foreach ($events as $name) {
-                if ($modx->getObject('modEvent', array('name' => $name))) {
+                if ($modx->getObject('modEvent', ['name' => $name])) {
                     continue; // уже есть — не трогаем
                 }
                 $event = $modx->newObject('modEvent');
-                $event->fromArray(array(
+                $event->fromArray([
                     'name'      => $name,
                     'service'   => 6,
                     'groupname' => 'mxApi',
-                ), '', true, true);
+                ], '', true, true);
                 $event->save();
                 $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Зарегистрировано событие: ' . $name);
             }
@@ -44,7 +44,7 @@ if ($transport->xpdo) {
 
         case xPDOTransport::ACTION_UNINSTALL:
             foreach ($events as $name) {
-                if ($event = $modx->getObject('modEvent', array('name' => $name))) {
+                if ($event = $modx->getObject('modEvent', ['name' => $name])) {
                     $event->remove();
                 }
             }

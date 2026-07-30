@@ -33,13 +33,13 @@ class ContextTest extends TestCase
     protected function setUp(): void
     {
         $this->platform = new FakePlatform();
-        $this->platform->users = array(new PlatformUser(2, 'manager', false, true, false));
-        $this->platform->passwords = array('manager' => 'secret');
-        $this->platform->permissions = array(
+        $this->platform->users = [new PlatformUser(2, 'manager', false, true, false)];
+        $this->platform->passwords = ['manager' => 'secret'];
+        $this->platform->permissions = [
             '2|mxapi_auth_token' => true,
             '2|mxapi_ctx_read' => true,
             '2|mxapi_any_read' => true,
-        );
+        ];
 
         $this->kernel = $this->makeKernel();
     }
@@ -72,7 +72,7 @@ class ContextTest extends TestCase
 
     public function testUnknownContextIsRejected()
     {
-        $this->platform->knownContexts = array('mgr');
+        $this->platform->knownContexts = ['mgr'];
 
         $response = $this->call('/ctx/items', $this->issueToken('ctx.read'));
 
@@ -90,7 +90,7 @@ class ContextTest extends TestCase
 
     public function testClientWithoutContextsIsLimitedToDefaultContext()
     {
-        $token = $this->issueClientToken('ctx.read', array());
+        $token = $this->issueClientToken('ctx.read', []);
 
         $response = $this->call('/ctx/items', $token);
 
@@ -100,7 +100,7 @@ class ContextTest extends TestCase
 
     public function testClientWithAllowedContextPasses()
     {
-        $token = $this->issueClientToken('ctx.read', array('web'));
+        $token = $this->issueClientToken('ctx.read', ['web']);
 
         $response = $this->call('/ctx/items', $token);
 
@@ -109,14 +109,14 @@ class ContextTest extends TestCase
 
     public function testClientWithWildcardContextPasses()
     {
-        $token = $this->issueClientToken('ctx.read', array('*'));
+        $token = $this->issueClientToken('ctx.read', ['*']);
 
         $this->assertSame(200, $this->call('/ctx/items', $token)->getStatus());
     }
 
     public function testRequestContextIsRefusedWhenDisabled()
     {
-        $response = $this->call('/req/items', $this->issueToken('req.read'), array('x-mxapi-context' => 'web'));
+        $response = $this->call('/req/items', $this->issueToken('req.read'), ['x-mxapi-context' => 'web']);
 
         $this->assertSame(403, $response->getStatus());
         $this->assertSame('context_not_allowed', $this->errorCode($response));
@@ -124,9 +124,9 @@ class ContextTest extends TestCase
 
     public function testRequestContextIsUsedWhenEnabled()
     {
-        $this->kernel = $this->makeKernel(array('allow_request_context' => true));
+        $this->kernel = $this->makeKernel(['allow_request_context' => true]);
 
-        $response = $this->call('/req/items', $this->issueToken('req.read'), array('x-mxapi-context' => 'web'));
+        $response = $this->call('/req/items', $this->issueToken('req.read'), ['x-mxapi-context' => 'web']);
 
         $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
         $this->assertSame('web', $response->getPayload()['data']['context']);
@@ -134,16 +134,16 @@ class ContextTest extends TestCase
 
     public function testRequestContextAcceptsQueryParameter()
     {
-        $this->kernel = $this->makeKernel(array('allow_request_context' => true));
+        $this->kernel = $this->makeKernel(['allow_request_context' => true]);
         $token = $this->issueToken('req.read');
 
         // Имя параметра — mxapi_context: `context` занят фильтром заказов ms2.
         $response = $this->kernel->handle(new Request(
             'GET',
             '/req/items',
-            array('mxapi_context' => 'web', 'context' => 'shop'),
-            array(),
-            array('authorization' => 'Bearer ' . $token),
+            ['mxapi_context' => 'web', 'context' => 'shop'],
+            [],
+            ['authorization' => 'Bearer ' . $token],
             '127.0.0.1'
         ));
 
@@ -153,7 +153,7 @@ class ContextTest extends TestCase
 
     public function testRequestContextFallsBackToDefault()
     {
-        $this->kernel = $this->makeKernel(array('allow_request_context' => true));
+        $this->kernel = $this->makeKernel(['allow_request_context' => true]);
 
         $response = $this->call('/req/items', $this->issueToken('req.read'));
 
@@ -163,10 +163,10 @@ class ContextTest extends TestCase
 
     public function testJournalRecordsContext()
     {
-        $this->kernel = $this->makeKernel(array('log_reads' => true));
+        $this->kernel = $this->makeKernel(['log_reads' => true]);
         $this->call('/ctx/items', $this->issueToken('ctx.read'));
 
-        $entries = array();
+        $entries = [];
         foreach ($this->platform->journal as $entry) {
             if (isset($entry['endpoint']) && $entry['endpoint'] === 'ctx.read') {
                 $entries[] = $entry;
@@ -182,7 +182,7 @@ class ContextTest extends TestCase
         // Процессоры miniShop2 сами уходят в контекст заказа (msOrder.context),
         // поэтому к моменту записи журнала платформа стоит уже не там, где
         // проверялись права. В аудите должен остаться контекст запуска.
-        $this->kernel = $this->makeKernel(array('log_reads' => true), array(new ContextDriftEndpoint()));
+        $this->kernel = $this->makeKernel(['log_reads' => true], [new ContextDriftEndpoint()]);
 
         $response = $this->call('/drift/items', $this->issueToken('drift.read'));
 
@@ -199,30 +199,30 @@ class ContextTest extends TestCase
      * @param array $extraEndpoints
      * @return Kernel
      */
-    private function makeKernel(array $config = array(), array $extraEndpoints = array())
+    private function makeKernel(array $config = [], array $extraEndpoints = [])
     {
-        $kernel = new Kernel($this->platform, new Config(array_merge(array(
+        $kernel = new Kernel($this->platform, new Config(array_merge([
             'token_ttl' => 3600,
             'context' => 'mgr',
-        ), $config)));
+        ], $config)));
 
-        $kernel->boot(array_merge(array(
+        $kernel->boot(array_merge([
             new TokenEndpoint($kernel->getTokenService()),
             new ContextBoundEndpoint(),
             new ContextFreeEndpoint(),
             new RequestContextEndpoint(),
-        ), $extraEndpoints));
+        ], $extraEndpoints));
 
         return $kernel;
     }
 
     private function issueToken($scope)
     {
-        $response = $this->kernel->handle(new Request('POST', '/auth/token', array(), array(
+        $response = $this->kernel->handle(new Request('POST', '/auth/token', [], [
             'username' => 'manager',
             'password' => 'secret',
             'scope' => $scope,
-        ), array(), '127.0.0.1'));
+        ], [], '127.0.0.1'));
 
         $this->assertSame(200, $response->getStatus(), 'Токен не выдан: ' . json_encode($response->getPayload()));
 
@@ -236,33 +236,33 @@ class ContextTest extends TestCase
      */
     private function issueClientToken($scope, array $contexts)
     {
-        $this->platform->clients = array(new ClientRecord(array(
+        $this->platform->clients = [new ClientRecord([
             'id' => 7,
             'client_key' => 'bridge',
             'secret_hash' => password_hash('bridge-secret', PASSWORD_DEFAULT),
             'user_id' => 2,
-            'scopes' => array($scope),
+            'scopes' => [$scope],
             'contexts' => $contexts,
             'active' => 1,
-        )));
+        ])];
 
-        $response = $this->kernel->handle(new Request('POST', '/auth/token', array(), array(
+        $response = $this->kernel->handle(new Request('POST', '/auth/token', [], [
             'grant_type' => 'client_credentials',
             'client_id' => 'bridge',
             'client_secret' => 'bridge-secret',
             'scope' => $scope,
-        ), array(), '127.0.0.1'));
+        ], [], '127.0.0.1'));
 
         $this->assertSame(200, $response->getStatus(), 'Токен клиента не выдан: ' . json_encode($response->getPayload()));
 
         return $response->getPayload()['data']['access_token'];
     }
 
-    private function call($path, $token, array $headers = array())
+    private function call($path, $token, array $headers = [])
     {
         $headers['authorization'] = 'Bearer ' . $token;
 
-        return $this->kernel->handle(new Request('GET', $path, array(), array(), $headers, '127.0.0.1'));
+        return $this->kernel->handle(new Request('GET', $path, [], [], $headers, '127.0.0.1'));
     }
 
     private function errorCode(Response $response)
@@ -281,19 +281,19 @@ class ContextBoundEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'ctx.read',
             'path' => '/ctx/items',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'ctx.read',
             'permission' => 'mxapi_ctx_read',
             'modx_context' => 'web',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array('context' => $context->getPlatform()->getContextKey()));
+        return Response::success(['context' => $context->getPlatform()->getContextKey()]);
     }
 }
 
@@ -304,18 +304,18 @@ class ContextFreeEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'any.read',
             'path' => '/any/items',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'any.read',
             'permission' => 'mxapi_any_read',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array('context' => $context->getPlatform()->getContextKey()));
+        return Response::success(['context' => $context->getPlatform()->getContextKey()]);
     }
 }
 
@@ -327,21 +327,21 @@ class ContextDriftEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'drift.read',
             'path' => '/drift/items',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'drift.read',
             'permission' => '',
             'modx_context' => 'mgr',
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
         $context->getPlatform()->useContext('web');
 
-        return Response::success(array('context' => $context->getPlatform()->getContextKey()));
+        return Response::success(['context' => $context->getPlatform()->getContextKey()]);
     }
 }
 
@@ -352,18 +352,18 @@ class RequestContextEndpoint extends AbstractEndpoint
 {
     protected function describe()
     {
-        return array(
+        return [
             'id' => 'req.read',
             'path' => '/req/items',
-            'methods' => array('GET'),
+            'methods' => ['GET'],
             'scope' => 'req.read',
             'permission' => '',
             'modx_context' => EndpointMetadata::MODX_CONTEXT_FROM_REQUEST,
-        );
+        ];
     }
 
     public function handle(Request $request, EndpointContext $context)
     {
-        return Response::success(array('context' => $context->getPlatform()->getContextKey()));
+        return Response::success(['context' => $context->getPlatform()->getContextKey()]);
     }
 }

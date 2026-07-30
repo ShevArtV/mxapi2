@@ -5,12 +5,12 @@
  * @var string $namespace
  */
 
-$templateVars = array();
+$templateVars = [];
 
 /** @var modCategory $mainCategory */
-$mainCategory = $this->modx->getObject('modCategory',array(
+$mainCategory = $this->modx->getObject('modCategory',[
     'category' => $categoryName
-));
+]);
 
 if(!$mainCategory) return $templateVars;
 

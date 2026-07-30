@@ -23,7 +23,7 @@ $root = dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/';
 $builderRoot = $root . "modxbuilder/";
 $modxRoot = $root;
 
-$buildConfig = array(
+$buildConfig = [
     //Name for displaying and category name
     "real_package_name" => "mxApi",
     //name for folder
@@ -42,14 +42,14 @@ $buildConfig = array(
     "modx_root" => $modxRoot,
     "builder_root" => $builderRoot,
     "tools_root" => $builderRoot . "tools/",
-);
+];
 
 $builderComponentRoot = $buildConfig["builder_root"] . $buildConfig['package_name'] . '/';
 
-$sources = array();
+$sources = [];
 
 if (COMPONENT_BUILD) {
-    $buildConfig = array_merge($buildConfig, array(
+    $buildConfig = array_merge($buildConfig, [
         "root" => $root,
         "build" => $builderComponentRoot . "build/",
         "resolvers" => $builderComponentRoot . "build/resolvers/",
@@ -71,9 +71,9 @@ if (COMPONENT_BUILD) {
 
         //It's a new file generated automatically. We will transfer new code to file above
         "new_xml_schema_file" => $builderComponentRoot . "core/components/{$buildConfig['package_name']}/model/schema/{$buildConfig['package_name']}.mysql.schema.new.xml"
-    ));
+    ]);
 } else {
-    $buildConfig = array_merge($buildConfig, array(
+    $buildConfig = array_merge($buildConfig, [
         "root" => $root,
         "build" => $builderComponentRoot . "build/",
         "resolvers" => $builderComponentRoot . "build/resolvers/",
@@ -95,7 +95,7 @@ if (COMPONENT_BUILD) {
 
         //It's a new file generated automatically. We will transfer new code to file above
         "new_xml_schema_file" => $root . "core/components/{$buildConfig['package_name']}/model/schema/{$buildConfig['package_name']}.mysql.schema.new.xml"
-    ));
+    ]);
 }
 
 //Объявляем базовые константы

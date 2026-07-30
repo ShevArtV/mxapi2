@@ -26,7 +26,7 @@ class ApiException extends \Exception
      * @param int $status
      * @param array $details
      */
-    public function __construct($errorCode, $message, $status = 400, array $details = array())
+    public function __construct($errorCode, $message, $status = 400, array $details = [])
     {
         parent::__construct($message);
         $this->errorCode = $errorCode;
@@ -71,7 +71,7 @@ class ApiException extends \Exception
             'invalid_parameter',
             'Некорректное значение параметра: ' . $parameter . ($reason !== '' ? ' (' . $reason . ')' : ''),
             400,
-            array('parameter' => $parameter)
+            ['parameter' => $parameter]
         );
     }
 
@@ -81,13 +81,13 @@ class ApiException extends \Exception
             'missing_parameter',
             'Обязательный параметр не передан: ' . $parameter,
             400,
-            array('parameter' => $parameter)
+            ['parameter' => $parameter]
         );
     }
 
     public static function invalidScope($scope)
     {
-        return new self('invalid_scope', 'Неизвестный scope: ' . $scope, 400, array('scope' => $scope));
+        return new self('invalid_scope', 'Неизвестный scope: ' . $scope, 400, ['scope' => $scope]);
     }
 
     public static function unknownContext($context)
@@ -96,7 +96,7 @@ class ApiException extends \Exception
             'unknown_context',
             'Контекст не найден или недоступен: ' . $context,
             400,
-            array('context' => $context)
+            ['context' => $context]
         );
     }
 
@@ -136,7 +136,7 @@ class ApiException extends \Exception
 
     public static function insufficientScope($scope)
     {
-        return new self('insufficient_scope', 'Требуется scope: ' . $scope, 403, array('scope' => $scope));
+        return new self('insufficient_scope', 'Требуется scope: ' . $scope, 403, ['scope' => $scope]);
     }
 
     public static function insufficientPermission($permission)
@@ -145,7 +145,7 @@ class ApiException extends \Exception
             'insufficient_permission',
             'Требуется право: ' . $permission,
             403,
-            array('permission' => $permission)
+            ['permission' => $permission]
         );
     }
 
@@ -156,7 +156,7 @@ class ApiException extends \Exception
 
     public static function ipNotAllowed($ip)
     {
-        return new self('ip_not_allowed', 'IP-адрес не разрешён.', 403, array('ip' => $ip));
+        return new self('ip_not_allowed', 'IP-адрес не разрешён.', 403, ['ip' => $ip]);
     }
 
     /**
@@ -170,7 +170,7 @@ class ApiException extends \Exception
             'context_not_allowed',
             'Контекст не разрешён для этого клиента: ' . $context,
             403,
-            array('context' => $context)
+            ['context' => $context]
         );
     }
 
@@ -182,23 +182,23 @@ class ApiException extends \Exception
             'route_not_found',
             'Эндпоинт не найден.',
             404,
-            array('route' => $route, 'method' => $method)
+            ['route' => $route, 'method' => $method]
         );
     }
 
-    public static function methodNotAllowed($route, $method, array $allowed = array())
+    public static function methodNotAllowed($route, $method, array $allowed = [])
     {
         return new self(
             'method_not_allowed',
             'Метод не поддерживается этим эндпоинтом.',
             405,
-            array('route' => $route, 'method' => $method, 'allowed' => $allowed)
+            ['route' => $route, 'method' => $method, 'allowed' => $allowed]
         );
     }
 
     public static function notFound($what)
     {
-        return new self('not_found', 'Объект не найден: ' . $what, 404, array('object' => $what));
+        return new self('not_found', 'Объект не найден: ' . $what, 404, ['object' => $what]);
     }
 
     /* --- 429 / 500 / 503 --- */
@@ -209,7 +209,7 @@ class ApiException extends \Exception
             'rate_limited',
             'Превышен лимит запросов.',
             429,
-            array('limit' => $limit, 'window_seconds' => 60)
+            ['limit' => $limit, 'window_seconds' => 60]
         );
     }
 

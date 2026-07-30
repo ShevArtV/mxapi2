@@ -25,11 +25,11 @@ class mxApiClientRemoveProcessor extends mxApiClientBaseProcessor
             return $this->failure($this->modx->lexicon('mxapi_client_err_remove'));
         }
 
-        $this->modx->removeCollection('mxApiToken', array('client_id' => $clientId));
+        $this->modx->removeCollection('mxApiToken', ['client_id' => $clientId]);
 
         // Журнал вызовов не трогаем: аудит обязан пережить удаление учётки,
         // иначе «кто менял заказы» перестанет отвечаться после чистки клиентов.
-        return $this->success('', array('id' => $clientId));
+        return $this->success('', ['id' => $clientId]);
     }
 }
 
