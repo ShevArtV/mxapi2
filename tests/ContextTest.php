@@ -177,23 +177,41 @@ class ContextTest extends TestCase
         $this->assertSame('web', end($entries)['context']);
     }
 
+    public function testJournalKeepsLaunchContextWhenEndpointSwitchesIt()
+    {
+        // Процессоры miniShop2 сами уходят в контекст заказа (msOrder.context),
+        // поэтому к моменту записи журнала платформа стоит уже не там, где
+        // проверялись права. В аудите должен остаться контекст запуска.
+        $this->kernel = $this->makeKernel(array('log_reads' => true), array(new ContextDriftEndpoint()));
+
+        $response = $this->call('/drift/items', $this->issueToken('drift.read'));
+
+        $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
+        $this->assertSame('web', $this->platform->getContextKey(), 'Эндпоинт должен был сменить контекст.');
+
+        $entry = end($this->platform->journal);
+        $this->assertSame('drift.read', $entry['endpoint']);
+        $this->assertSame('mgr', $entry['context']);
+    }
+
     /**
      * @param array $config
+     * @param array $extraEndpoints
      * @return Kernel
      */
-    private function makeKernel(array $config = array())
+    private function makeKernel(array $config = array(), array $extraEndpoints = array())
     {
         $kernel = new Kernel($this->platform, new Config(array_merge(array(
             'token_ttl' => 3600,
             'context' => 'mgr',
         ), $config)));
 
-        $kernel->boot(array(
+        $kernel->boot(array_merge(array(
             new TokenEndpoint($kernel->getTokenService()),
             new ContextBoundEndpoint(),
             new ContextFreeEndpoint(),
             new RequestContextEndpoint(),
-        ));
+        ), $extraEndpoints));
 
         return $kernel;
     }
@@ -297,6 +315,32 @@ class ContextFreeEndpoint extends AbstractEndpoint
 
     public function handle(Request $request, EndpointContext $context)
     {
+        return Response::success(array('context' => $context->getPlatform()->getContextKey()));
+    }
+}
+
+/**
+ * Эндпоинт, который сам уходит в другой контекст во время работы — как это
+ * делают процессоры miniShop2 с контекстом заказа.
+ */
+class ContextDriftEndpoint extends AbstractEndpoint
+{
+    protected function describe()
+    {
+        return array(
+            'id' => 'drift.read',
+            'path' => '/drift/items',
+            'methods' => array('GET'),
+            'scope' => 'drift.read',
+            'permission' => '',
+            'modx_context' => 'mgr',
+        );
+    }
+
+    public function handle(Request $request, EndpointContext $context)
+    {
+        $context->getPlatform()->useContext('web');
+
         return Response::success(array('context' => $context->getPlatform()->getContextKey()));
     }
 }

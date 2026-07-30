@@ -131,6 +131,7 @@ class Kernel
         $startedAt = microtime(true);
         $metadata = null;
         $auth = null;
+        $contextKey = $this->platform->getContextKey();
 
         try {
             if (!$this->config->getBool('enabled')) {
@@ -159,6 +160,12 @@ class Kernel
 
             $this->applyContext($request, $metadata, $auth);
 
+            // Контекст запоминается сразу после переключения, а не читается при
+            // записи журнала: процессоры miniShop2 сами уходят в контекст заказа
+            // (msOrder.context), и после вызова платформа стоит уже не там, где
+            // проверялись права. В аудите нужен контекст запуска.
+            $contextKey = $this->platform->getContextKey();
+
             if ($auth && $metadata->getPermission() !== '') {
                 $this->tokenService->assertPermission($auth->getUser(), $metadata->getPermission());
             }
@@ -176,12 +183,12 @@ class Kernel
                 'status' => $response->getStatus(),
             ));
 
-            $this->logCall($request, $metadata, $auth, $response->getStatus(), '', $startedAt, $response);
+            $this->logCall($request, $metadata, $auth, $response->getStatus(), '', $startedAt, $contextKey, $response);
             $this->runMaintenance();
 
             return $this->decorate($response, $request);
         } catch (ApiException $exception) {
-            $this->logCall($request, $metadata, $auth, $exception->getStatus(), $exception->getErrorCode(), $startedAt);
+            $this->logCall($request, $metadata, $auth, $exception->getStatus(), $exception->getErrorCode(), $startedAt, $contextKey);
 
             return $this->decorate(Response::fromException($exception), $request);
         } catch (\Exception $exception) {
@@ -192,7 +199,7 @@ class Kernel
                 'file' => $exception->getFile() . ':' . $exception->getLine(),
             ));
 
-            $this->logCall($request, $metadata, $auth, 500, 'internal_error', $startedAt);
+            $this->logCall($request, $metadata, $auth, 500, 'internal_error', $startedAt, $contextKey);
 
             $error = $this->config->getBool('debug')
                 ? ApiException::internalError($exception->getMessage())
@@ -476,10 +483,11 @@ class Kernel
      * @param int $status
      * @param string $errorCode
      * @param float $startedAt
+     * @param string $contextKey Контекст, в котором эндпоинт был запущен.
      * @param Response|null $response
      * @return void
      */
-    private function logCall(Request $request, $metadata, $auth, $status, $errorCode, $startedAt, Response $response = null)
+    private function logCall(Request $request, $metadata, $auth, $status, $errorCode, $startedAt, $contextKey = '', Response $response = null)
     {
         $isWrite = $metadata ? $metadata->isWrite() : false;
         $isError = $status >= 400;
@@ -510,7 +518,7 @@ class Kernel
             'endpoint' => $metadata ? $metadata->getId() : '',
             // Контекст обязателен в аудите: на мультисайте «кто менял заказ» без
             // указания сайта бессмысленно.
-            'context' => $this->platform->getContextKey(),
+            'context' => (string)$contextKey,
             'route' => $request->getPath(),
             'method' => $request->getMethod(),
             'status' => (int)$status,
