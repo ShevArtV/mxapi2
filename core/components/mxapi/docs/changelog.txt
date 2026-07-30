@@ -5,3 +5,8 @@
 - FEATURE: политика доступа mxapiTemplate/mxapiDefault с обязательным правом load — без него non-sudo пользователь получал отказ ещё до проверки прав эндпоинта.
 - FEATURE: системные события mxApiOnRegisterEndpoints, mxApiOnBeforeRequest, mxApiOnBeforeEndpointRun, mxApiOnAfterEndpointRun, mxApiOnResponse.
 - FEATURE: системные настройки: префикс маршрутов, TTL токена, пагинация, лимит запросов, доверенные прокси, список провайдеров, журналирование, CORS.
+- FEATURE: провайдеры эндпоинтов — сторонний пакет добавляет свои маршруты через настройку mxapi.providers или событие mxApiOnRegisterEndpoints, не правя mxApi. Сломанный провайдер не роняет остальной API.
+- FEATURE: ProcessorEndpoint — эндпоинт поверх процессора MODX с жёстким allow-list входных свойств, приведением типов, пагинацией и разворотом списочного ответа в data + meta.total.
+- FIX: ответ процессора считается успешным по ключу success. modProcessorResponse::isError() проверяет его только для массива, а списочные процессоры отдают JSON-строку — их ошибки прошли бы как HTTP 200.
+- FEATURE: описание реализации (процессор, маппинг полей) видно в админке, но не отдаётся во внешний каталог и OpenAPI.
+- DOCS: docs/providers.md — как пакету добавить свои эндпоинты.

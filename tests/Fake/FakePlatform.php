@@ -49,6 +49,15 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     /** @var int Управляемое время: тесты срока жизни токена не должны спать. */
     public $time = 1000000;
 
+    /** @var array Свойства последнего запуска процессора — для проверки allow-list. */
+    public $lastProcessorProperties = array();
+
+    /** @var string */
+    public $lastProcessor = '';
+
+    /** @var bool Управляет тем, успешен ли ответ процессора. */
+    public $processorSuccess = true;
+
     /** @var array */
     private $cache = array();
 
@@ -114,7 +123,23 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
 
     public function runProcessor($processor, array $properties = array(), array $options = array())
     {
-        return new ProcessorResult(true, array('processor' => $processor, 'properties' => $properties));
+        $this->lastProcessor = $processor;
+        $this->lastProcessorProperties = $properties;
+
+        if (!$this->processorSuccess) {
+            return new ProcessorResult(false, array('success' => false, 'message' => 'Нельзя'), 'Нельзя', array(
+                array('id' => 'status', 'msg' => 'Недопустимый статус'),
+            ));
+        }
+
+        return new ProcessorResult(true, array(
+            'success' => true,
+            'total' => 2,
+            'results' => array(
+                array('id' => 1, 'num' => '2607-1'),
+                array('id' => 2, 'num' => '2607-2'),
+            ),
+        ));
     }
 
     public function invokeEvent($event, array $params = array())

@@ -176,26 +176,34 @@ class Modx2Platform implements PlatformInterface
         $response = $this->modx->runProcessor($processor, $properties, $options);
 
         if (!$response instanceof \modProcessorResponse) {
-            return new ProcessorResult(false, array(), 'Процессор вернул некорректный ответ.');
+            // runProcessor возвращает '' , если файла процессора нет.
+            return new ProcessorResult(false, array(), 'Процессор не найден или вернул некорректный ответ.');
         }
 
-        $payload = $response->getResponse();
+        $raw = $response->getResponse();
+        $payload = $raw;
         if (is_string($payload)) {
             $decoded = $this->modx->fromJSON($payload);
-            if (is_array($decoded)) {
-                $payload = $decoded;
-            }
+            $payload = is_array($decoded) ? $decoded : array('response' => $payload);
         }
         if (!is_array($payload)) {
             $payload = array('response' => $payload);
         }
 
-        $isError = $response->isError();
-        $message = '';
-        if ($isError) {
-            $message = isset($payload['message']) && $payload['message'] !== ''
-                ? (string)$payload['message']
-                : 'Ошибка процессора.';
+        // ⚠️ modProcessorResponse::isError() проверяет ключ success ТОЛЬКО когда
+        // тело — массив (modprocessor.class.php:1670). Списочные процессоры
+        // (getlist) отдают JSON-строку, и на ней isError() всегда возвращает
+        // false — ошибка процессора прошла бы как успех. Поэтому судим по
+        // декодированному success, и лишь если его нет — полагаемся на isError().
+        if (array_key_exists('success', $payload)) {
+            $success = (bool)$payload['success'];
+        } else {
+            $success = !$response->isError();
+        }
+
+        $message = isset($payload['message']) ? (string)$payload['message'] : '';
+        if (!$success && $message === '') {
+            $message = 'Ошибка процессора.';
         }
 
         $errors = array();
@@ -203,9 +211,7 @@ class Modx2Platform implements PlatformInterface
             $errors = $payload['errors'];
         }
 
-        $data = isset($payload['object']) && is_array($payload['object']) ? $payload['object'] : $payload;
-
-        return new ProcessorResult(!$isError, $data, $message, $errors);
+        return new ProcessorResult($success, $payload, $message, $errors);
     }
 
     /**

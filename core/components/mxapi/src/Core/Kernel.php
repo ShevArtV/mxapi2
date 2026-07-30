@@ -193,18 +193,17 @@ class Kernel
         $classes = $this->config->getList('providers');
 
         // Пакеты могут зарегистрироваться на событии — тогда прописывать их в
-        // настройке вручную не нужно.
+        // настройке вручную не нужно. Обработчик возвращает имя класса
+        // провайдера, готовый объект провайдера или список того и другого.
         $results = $this->platform->invokeEvent('mxApiOnRegisterEndpoints', array());
         foreach ($results as $result) {
-            if (is_string($result) && $result !== '') {
-                $classes[] = $result;
-                continue;
-            }
-            if (is_array($result)) {
-                foreach ($result as $item) {
-                    if (is_string($item) && $item !== '') {
-                        $classes[] = $item;
-                    }
+            foreach (is_array($result) ? $result : array($result) as $item) {
+                if ($item instanceof ProviderInterface) {
+                    $this->useProvider($item);
+                    continue;
+                }
+                if (is_string($item) && trim($item) !== '') {
+                    $classes[] = trim($item);
                 }
             }
         }
@@ -231,11 +230,29 @@ class Kernel
             return;
         }
 
+        $this->useProvider($provider);
+    }
+
+    /**
+     * @param ProviderInterface $provider
+     * @return void
+     */
+    private function useProvider(ProviderInterface $provider)
+    {
+        // Провайдер сам решает, применим ли он на этом сайте: например,
+        // провайдер miniShop2 не должен ничего регистрировать там, где
+        // miniShop2 не установлен.
         if (!$provider->isAvailable($this->platform)) {
             return;
         }
 
-        $this->registry->addMany($provider->getEndpoints($this->platform, $this->config));
+        try {
+            $this->registry->addMany($provider->getEndpoints($this->platform, $this->config));
+        } catch (\Exception $exception) {
+            // Сломанный сторонний провайдер не должен ронять весь API:
+            // остальные эндпоинты обязаны продолжать работать.
+            $this->platform->log('error', 'Провайдер ' . $provider->getId() . ' не отдал эндпоинты: ' . $exception->getMessage());
+        }
     }
 
     /**

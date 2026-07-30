@@ -13,8 +13,8 @@ class ProcessorResult
     /** @var bool */
     private $success;
 
-    /** @var array */
-    private $data;
+    /** @var array Полное тело ответа процессора. */
+    private $payload;
 
     /** @var string */
     private $message;
@@ -22,10 +22,10 @@ class ProcessorResult
     /** @var array */
     private $errors;
 
-    public function __construct($success, array $data = array(), $message = '', array $errors = array())
+    public function __construct($success, array $payload = array(), $message = '', array $errors = array())
     {
         $this->success = (bool)$success;
-        $this->data = $data;
+        $this->payload = $payload;
         $this->message = (string)$message;
         $this->errors = $errors;
     }
@@ -39,11 +39,68 @@ class ProcessorResult
     }
 
     /**
+     * Содержательная часть ответа без служебных ключей процессора.
+     *
      * @return array
      */
     public function getData()
     {
-        return $this->data;
+        $data = $this->payload;
+        unset($data['success'], $data['message'], $data['errors'], $data['total'], $data['results'], $data['object']);
+
+        if ($this->hasObject()) {
+            return $this->getObject();
+        }
+
+        return $data;
+    }
+
+    /**
+     * @return array Полное тело, как его вернул процессор.
+     */
+    public function getPayload()
+    {
+        return $this->payload;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasObject()
+    {
+        return isset($this->payload['object']) && is_array($this->payload['object']);
+    }
+
+    /**
+     * @return array
+     */
+    public function getObject()
+    {
+        return $this->hasObject() ? $this->payload['object'] : array();
+    }
+
+    /**
+     * @return bool Ответ списочного процессора (getlist).
+     */
+    public function isList()
+    {
+        return isset($this->payload['results']) && is_array($this->payload['results']);
+    }
+
+    /**
+     * @return array
+     */
+    public function getResults()
+    {
+        return $this->isList() ? $this->payload['results'] : array();
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotal()
+    {
+        return isset($this->payload['total']) ? (int)$this->payload['total'] : count($this->getResults());
     }
 
     /**

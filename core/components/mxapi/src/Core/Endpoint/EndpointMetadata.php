@@ -19,6 +19,15 @@ class EndpointMetadata
     const AUTH_NONE = 'none';
     const AUTH_BEARER = 'bearer';
 
+    /**
+     * Ключи реализации: полезны в админке («чем сделан эндпоинт»), но наружу не
+     * отдаются — публичному клиенту незачем знать имена процессоров и маппинг
+     * полей, а в OpenAPI им тем более не место.
+     *
+     * @var array
+     */
+    private static $internalKeys = array('processor', 'processors_path', 'field_map', 'properties');
+
     /** @var array */
     private $spec;
 
@@ -179,6 +188,20 @@ class EndpointMetadata
     }
 
     /**
+     * Значение ключа реализации (processor, field_map и т.п.).
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getExtra($key, $default = null)
+    {
+        return array_key_exists($key, $this->spec) ? $this->spec[$key] : $default;
+    }
+
+    /**
+     * Полное описание — для CMP: там нужно видеть и провайдера, и процессор.
+     *
      * @return array
      */
     public function toArray()
@@ -187,6 +210,21 @@ class EndpointMetadata
         $spec['parameters'] = array();
         foreach ($this->parameters as $parameter) {
             $spec['parameters'][] = $parameter->toArray();
+        }
+
+        return $spec;
+    }
+
+    /**
+     * Описание для внешнего клиента и OpenAPI: без деталей реализации.
+     *
+     * @return array
+     */
+    public function toPublicArray()
+    {
+        $spec = $this->toArray();
+        foreach (self::$internalKeys as $key) {
+            unset($spec[$key]);
         }
 
         return $spec;

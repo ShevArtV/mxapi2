@@ -48,7 +48,8 @@ class EndpointsEndpoint extends AbstractEndpoint
     {
         $items = array();
         foreach ($this->registry->publicOnly() as $endpoint) {
-            $items[] = $endpoint->getMetadata()->toArray();
+            // Публичное представление: без имён процессоров и маппинга полей.
+            $items[] = $endpoint->getMetadata()->toPublicArray();
         }
 
         return Response::success($items, array(
