@@ -16,3 +16,4 @@ $_lang['mxapi_log'] = 'Log';
 
 $_lang['mxapi_err_no_permission'] = 'Insufficient permissions for this action.';
 $_lang['mxapi_err_not_found'] = 'Object not found.';
+$_lang['mxapi_err_no_vendor'] = 'mxApi dependencies are missing: no vendor/autoload.php in core/components/mxapi/.';

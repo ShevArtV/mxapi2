@@ -50,7 +50,7 @@ class Request
      * (работает без правки конфигурации веб-сервера), затем PATH_INFO, затем
      * REQUEST_URI за вычетом префикса маршрутов и имени скрипта.
      *
-     * @param string $routePrefix Публичный префикс маршрутов, напр. /api/mx/v1
+     * @param string $routePrefix Публичный префикс маршрутов, напр. /mxapi/v1
      * @param array $trustedProxies
      * @return self
      */

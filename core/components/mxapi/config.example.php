@@ -12,7 +12,7 @@
 
 return array(
     // Публичный префикс маршрутов.
-    'route_prefix' => '/api/mx/v1',
+    'route_prefix' => '/mxapi/v1',
 
     // Время жизни токена, сек.
     'token_ttl' => 86400,

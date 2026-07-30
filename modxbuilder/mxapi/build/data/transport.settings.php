@@ -12,7 +12,7 @@ $definitions = array(
     'mxapi.enabled'               => array('value' => '1',            'xtype' => 'combo-boolean'),
     // Публичный префикс маршрутов. Проектные алиасы (напр. /api/v1/...) задаются
     // в core/config/mxapi.php, а не здесь.
-    'mxapi.route_prefix'          => array('value' => '/api/mx/v1',   'xtype' => 'textfield'),
+    'mxapi.route_prefix'          => array('value' => '/mxapi/v1',   'xtype' => 'textfield'),
     // Время жизни выданного bearer-токена, сек.
     'mxapi.token_ttl'             => array('value' => '86400',        'xtype' => 'numberfield'),
     // Пагинация по умолчанию и жёсткий потолок для limit.

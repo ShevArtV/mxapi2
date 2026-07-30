@@ -4,7 +4,7 @@
  *
  * Маршрутизация возможна двумя способами:
  *   1) правилом веб-сервера на префикс (nginx):
- *        location ^~ /api/mx/ { try_files $uri /assets/components/mxapi/index.php$is_args$args; }
+ *        location ^~ /mxapi/ { try_files $uri /assets/components/mxapi/index.php$is_args$args; }
  *   2) без правки конфигурации веб-сервера — параметром route:
  *        /assets/components/mxapi/index.php?route=/auth/token
  *

@@ -1,0 +1,218 @@
+/* Каталог эндпоинтов mxApi. Оформление держится в рамках стилей менеджера
+   MODX: страница читается как справочник, а не как отдельное приложение. */
+
+#mxapi-catalog {
+    padding: 12px 4px;
+    font-size: 13px;
+}
+
+.mxapi-loading,
+.mxapi-empty,
+.mxapi-error,
+.mxapi-warning {
+    padding: 12px 14px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.mxapi-loading,
+.mxapi-empty {
+    color: #777;
+    background: #f5f5f5;
+}
+
+.mxapi-error {
+    color: #8a1f11;
+    background: #fbe3e4;
+    border: 1px solid #fbc2c4;
+}
+
+.mxapi-warning {
+    color: #7a5b1a;
+    background: #fff6d9;
+    border: 1px solid #f0dda4;
+}
+
+.mxapi-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.mxapi-search {
+    flex: 1 1 260px;
+    min-width: 200px;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.mxapi-provider {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.mxapi-button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fafafa;
+    color: #333;
+    text-decoration: none;
+}
+
+.mxapi-button:hover {
+    background: #f0f0f0;
+}
+
+.mxapi-base {
+    margin-bottom: 12px;
+    color: #777;
+}
+
+.mxapi-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    background: #fff;
+}
+
+.mxapi-item-open {
+    border-color: #b8b8b8;
+}
+
+.mxapi-item-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    cursor: pointer;
+}
+
+.mxapi-item-head:hover {
+    background: #fafafa;
+}
+
+.mxapi-methods {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.mxapi-method {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: #6b7785;
+}
+
+.mxapi-method-get { background: #3a7ca5; }
+.mxapi-method-post { background: #3f8f4f; }
+.mxapi-method-patch,
+.mxapi-method-put { background: #b07d2b; }
+.mxapi-method-delete { background: #a8443c; }
+
+.mxapi-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    border: 1px solid #d5d5d5;
+    color: #666;
+    background: #f7f7f7;
+}
+
+.mxapi-tag-write { border-color: #e2c98d; color: #7a5b1a; background: #fff6d9; }
+.mxapi-tag-internal { border-color: #c9c9c9; color: #555; }
+.mxapi-tag-deprecated { border-color: #e0b4b0; color: #8a1f11; background: #fbe3e4; }
+
+.mxapi-path {
+    font-family: Menlo, Consolas, monospace;
+    font-size: 12px;
+}
+
+.mxapi-title {
+    color: #444;
+}
+
+.mxapi-provider-tag {
+    margin-left: auto;
+    color: #999;
+    font-size: 12px;
+}
+
+.mxapi-details {
+    padding: 4px 14px 14px;
+    border-top: 1px solid #eee;
+}
+
+.mxapi-description {
+    margin: 10px 0;
+    color: #444;
+}
+
+.mxapi-meta,
+.mxapi-params {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.mxapi-meta th {
+    width: 180px;
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    padding: 4px 8px 4px 0;
+    vertical-align: top;
+}
+
+.mxapi-meta td {
+    padding: 4px 0;
+}
+
+.mxapi-params th,
+.mxapi-params td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+
+.mxapi-params thead th {
+    color: #666;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.mxapi-muted {
+    color: #999;
+}
+
+.mxapi-curl {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    background: #f6f6f6;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+#mxapi-catalog code {
+    font-family: Menlo, Consolas, monospace;
+    font-size: 12px;
+    background: #f4f4f4;
+    padding: 1px 4px;
+    border-radius: 2px;
+}

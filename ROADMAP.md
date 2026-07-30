@@ -19,8 +19,8 @@ registered without editing the package core.
 - adapters for site-specific data providers.
 
 The current `/api/v1/orders/export` route remains a Sleep & Glow compatibility
-alias. New reusable API routes should use the mxapi namespace, for example
-`/api/mx/v1/...`.
+alias. New reusable API routes use the mxapi namespace `/mxapi/v1/...`
+(owner decision 2026-07-30; earlier drafts said `/api/mx/v1/...`).
 
 ## Phase 1: Stabilize Current API
 
@@ -96,7 +96,7 @@ return array(
    body schema, response summary and examples.
 
 4. Export OpenAPI from the same metadata.
-   Location: `GET /api/mx/meta/openapi` and CMP download action.
+   Location: `GET /mxapi/v1/meta/openapi` and CMP download action.
    Reason: static YAML must not become the source of truth.
 
 ## Phase 4: MODX 2 Core Endpoints

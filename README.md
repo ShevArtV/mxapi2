@@ -92,6 +92,24 @@ ssh <stand> '/usr/local/php/php-7.4/bin/php art-sites.ru/htdocs/mspaypalalt/modx
 
 Таблицы при удалении пакета не дропаются — в них боевые учётки и аудит.
 
+## Маршруты
+
+Публичный префикс по умолчанию — `/mxapi/v1` (настройка `mxapi.route_prefix`).
+
+```nginx
+location ^~ /mxapi/ {
+    try_files $uri /assets/components/mxapi/index.php$is_args$args;
+}
+```
+
+Без правки конфигурации веб-сервера тот же API доступен как
+`/assets/components/mxapi/index.php?route=/auth/token` — удобно для проверки
+установки, но публичным контрактом считается префикс.
+
+Исторические маршруты конкретного сайта (например `/api/v1/orders/export`
+старого Sleep & Glow) задаются алиасами в `core/config/mxapi.php` и в
+умолчаниях пакета отсутствуют.
+
 ## Права
 
 Проверка идёт штатным механизмом MODX по namespace `mxapi`. Пакет создаёт шаблон

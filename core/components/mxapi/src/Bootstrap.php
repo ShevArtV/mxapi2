@@ -9,6 +9,7 @@ use MxApi\Core\Registry\EndpointRegistry;
 use MxApi\Endpoint\Auth\RevokeEndpoint;
 use MxApi\Endpoint\Auth\TokenEndpoint;
 use MxApi\Endpoint\Meta\EndpointsEndpoint;
+use MxApi\Endpoint\Meta\OpenApiEndpoint;
 use MxApi\Platform\Modx2\Modx2Platform;
 
 /**
@@ -45,7 +46,7 @@ class Bootstrap
     {
         $values = array(
             'enabled' => (bool)$modx->getOption('mxapi.enabled', null, true),
-            'route_prefix' => $modx->getOption('mxapi.route_prefix', null, '/api/mx/v1'),
+            'route_prefix' => $modx->getOption('mxapi.route_prefix', null, '/mxapi/v1'),
             'token_ttl' => (int)$modx->getOption('mxapi.token_ttl', null, 86400),
             'default_limit' => (int)$modx->getOption('mxapi.default_limit', null, 100),
             'max_limit' => (int)$modx->getOption('mxapi.max_limit', null, 1000),
@@ -84,6 +85,7 @@ class Bootstrap
             new TokenEndpoint($tokenService),
             new RevokeEndpoint($tokenService),
             new EndpointsEndpoint($kernel->getRegistry()),
+            new OpenApiEndpoint($kernel->getRegistry()),
         );
     }
 }

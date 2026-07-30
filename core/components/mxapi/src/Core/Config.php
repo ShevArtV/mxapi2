@@ -21,7 +21,7 @@ class Config
     /** @var array */
     private static $defaults = array(
         'enabled' => true,
-        'route_prefix' => '/api/mx/v1',
+        'route_prefix' => '/mxapi/v1',
         'token_ttl' => 86400,
         'default_limit' => 100,
         'max_limit' => 1000,

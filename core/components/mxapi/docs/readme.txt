@@ -9,7 +9,7 @@ mxApi
 Что внутри
 ----------
 
-- Маршруты под собственным префиксом (по умолчанию /api/mx/v1), не пересекающиеся
+- Маршруты под собственным префиксом (по умолчанию /mxapi/v1), не пересекающиеся
   с маршрутами сайта и других пакетов.
 - Bearer-токены: выдача по логину/паролю менеджера или по паре client_id/secret
   для машинных интеграций. В базе хранится только sha256-хэш токена.
@@ -38,4 +38,27 @@ mxApi
    authority 0, а пользователь состоит в группе с ролью меньшего уровня, он
    получит отказ, и выглядеть это будет как проблема прав mxApi.
 
-Документация и настройки — в админке: Компоненты → mxApi.
+Каталог эндпоинтов — в админке: Компоненты → mxApi. Там же кнопка выгрузки
+OpenAPI: файл можно передать интегратору или загрузить в Swagger UI/Postman.
+
+Маршрутизация
+-------------
+
+Правило веб-сервера на префикс (nginx):
+
+    location ^~ /mxapi/ {
+        try_files $uri /assets/components/mxapi/index.php$is_args$args;
+    }
+
+Без правки конфигурации веб-сервера API доступен напрямую:
+
+    /assets/components/mxapi/index.php?route=/auth/token
+
+Проверить установку можно так:
+
+    curl -X POST 'https://site.ru/mxapi/v1/auth/token' \
+      -H 'Content-Type: application/json' \
+      -d '{"username":"api_user","password":"...","scope":"meta.read"}'
+
+    curl 'https://site.ru/mxapi/v1/meta/endpoints' \
+      -H 'Authorization: Bearer <token>'

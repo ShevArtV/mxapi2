@@ -16,3 +16,4 @@ $_lang['mxapi_log'] = 'Журнал';
 
 $_lang['mxapi_err_no_permission'] = 'Недостаточно прав для этого действия.';
 $_lang['mxapi_err_not_found'] = 'Объект не найден.';
+$_lang['mxapi_err_no_vendor'] = 'Зависимости mxApi не установлены: нет vendor/autoload.php в core/components/mxapi/.';
