@@ -10,6 +10,10 @@ use MxApi\Core\Endpoint\EndpointMetadata;
 use MxApi\Core\Http\ApiException;
 use MxApi\Core\Http\Request;
 use MxApi\Core\Http\Response;
+use MxApi\Core\Maintenance\MaintenanceService;
+use MxApi\Core\Middleware\IdempotencyMiddleware;
+use MxApi\Core\Middleware\MiddlewareInterface;
+use MxApi\Core\Middleware\RateLimitMiddleware;
 use MxApi\Core\Platform\PlatformInterface;
 use MxApi\Core\Provider\ProviderInterface;
 use MxApi\Core\Registry\EndpointRegistry;
@@ -33,12 +37,24 @@ class Kernel
     /** @var TokenService */
     private $tokenService;
 
+    /** @var MiddlewareInterface[] */
+    private $middleware = array();
+
     public function __construct(PlatformInterface $platform, Config $config)
     {
         $this->platform = $platform;
         $this->config = $config;
         $this->registry = new EndpointRegistry();
         $this->tokenService = new TokenService($platform, $config, $this->registry);
+    }
+
+    /**
+     * @param MiddlewareInterface $middleware
+     * @return void
+     */
+    public function addMiddleware(MiddlewareInterface $middleware)
+    {
+        $this->middleware[] = $middleware;
     }
 
     /**
@@ -75,6 +91,24 @@ class Kernel
     public function boot(array $builtin)
     {
         $this->registry->addMany($builtin);
+
+        // Порядок важен: лимит частоты отсекает лавину до любой работы с базой,
+        // и только потом проверяется повтор по ключу идемпотентности.
+        $this->addMiddleware(new RateLimitMiddleware());
+        $this->addMiddleware(new IdempotencyMiddleware());
+
+        foreach ($this->config->getList('middleware') as $class) {
+            if (!class_exists($class)) {
+                $this->platform->log('warning', 'Промежуточный обработчик не найден: ' . $class);
+                continue;
+            }
+            $instance = new $class();
+            if ($instance instanceof MiddlewareInterface) {
+                $this->addMiddleware($instance);
+            } else {
+                $this->platform->log('warning', 'Класс не реализует MiddlewareInterface: ' . $class);
+            }
+        }
 
         foreach ($this->collectProviderClasses() as $class) {
             $this->registerProvider($class);
@@ -129,14 +163,16 @@ class Kernel
                 'user' => $auth ? $auth->getUser()->getId() : 0,
             ));
 
-            $response = $endpoint->handle($request, new EndpointContext($this->platform, $this->config, $auth));
+            $endpointContext = new EndpointContext($this->platform, $this->config, $auth, $metadata);
+            $response = $this->runPipeline($request, $endpointContext, $endpoint);
 
             $this->platform->invokeEvent('mxApiOnAfterEndpointRun', array(
                 'endpoint' => $metadata->getId(),
                 'status' => $response->getStatus(),
             ));
 
-            $this->logCall($request, $metadata, $auth, $response->getStatus(), '', $startedAt);
+            $this->logCall($request, $metadata, $auth, $response->getStatus(), '', $startedAt, $response);
+            $this->runMaintenance();
 
             return $this->decorate($response, $request);
         } catch (ApiException $exception) {
@@ -159,6 +195,79 @@ class Kernel
 
             return $this->decorate(Response::fromException($error), $request);
         }
+    }
+
+    /**
+     * Прогон запроса через цепочку промежуточных обработчиков к эндпоинту.
+     *
+     * @param Request $request
+     * @param EndpointContext $context
+     * @param EndpointInterface $endpoint
+     * @return Response
+     */
+    private function runPipeline(Request $request, EndpointContext $context, EndpointInterface $endpoint)
+    {
+        $next = function (Request $request) use ($endpoint, $context) {
+            return $endpoint->handle($request, $context);
+        };
+
+        // Собираем с конца: первый в списке обработчик выполняется первым.
+        foreach (array_reverse($this->middleware) as $middleware) {
+            $current = $next;
+            $next = function (Request $request) use ($middleware, $context, $current) {
+                return $middleware->process($request, $context, $current);
+            };
+        }
+
+        return $next($request);
+    }
+
+    /**
+     * Тело ответа сохраняется только там, где его потом вернут: успешная
+     * запись с ключом идемпотентности. Складывать в журнал каждый ответ —
+     * лишний вес таблицы и риск утащить туда персональные данные.
+     *
+     * @param Response|null $response
+     * @param string $idempotencyKey
+     * @param bool $isWrite
+     * @param int $status
+     * @return array|null
+     */
+    private function summarizeResponse($response, $idempotencyKey, $isWrite, $status)
+    {
+        if (!$response || $idempotencyKey === '' || !$isWrite || $status >= 400) {
+            return null;
+        }
+
+        if ($response->isStream()) {
+            // Потоковый ответ не собран в памяти — сохранять нечего.
+            return null;
+        }
+
+        $payload = $response->getPayload();
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded === false || strlen($encoded) > 262144) {
+            $this->platform->log('warning', 'Ответ слишком велик для повтора по ключу идемпотентности', array(
+                'idempotency_key' => $idempotencyKey,
+            ));
+
+            return null;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @return void
+     */
+    private function runMaintenance()
+    {
+        $service = new MaintenanceService($this->platform, $this->config);
+        $service->runIfDue();
     }
 
     /**
@@ -294,15 +403,20 @@ class Kernel
      * @param int $status
      * @param string $errorCode
      * @param float $startedAt
+     * @param Response|null $response
      * @return void
      */
-    private function logCall(Request $request, $metadata, $auth, $status, $errorCode, $startedAt)
+    private function logCall(Request $request, $metadata, $auth, $status, $errorCode, $startedAt, Response $response = null)
     {
-        // Успешные чтения по умолчанию не пишем: журнал нужен для аудита
-        // изменений и разбора отказов, а не для счётчика обращений.
         $isWrite = $metadata ? $metadata->isWrite() : false;
         $isError = $status >= 400;
-        if (!$isWrite && !$isError && !$this->config->getBool('log_reads')) {
+        $idempotencyKey = trim($request->getHeader('idempotency-key'));
+
+        // Успешные чтения по умолчанию не пишем: журнал нужен для аудита
+        // изменений и разбора отказов, а не для счётчика обращений. Исключение —
+        // запись с ключом идемпотентности: без сохранённой строки повтор
+        // выполнится второй раз, то есть механизм не сработает.
+        if (!$isWrite && !$isError && !$this->config->getBool('log_reads') && $idempotencyKey === '') {
             return;
         }
 
@@ -328,8 +442,9 @@ class Kernel
             'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
             'ip' => $request->getIp(),
             'actor' => $auth ? $auth->getActor() : '',
-            'idempotency_key' => $request->getHeader('idempotency-key'),
+            'idempotency_key' => $idempotencyKey,
             'request_summary' => $params,
+            'response_summary' => $this->summarizeResponse($response, $idempotencyKey, $isWrite, $status),
         ));
     }
 }

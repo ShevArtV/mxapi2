@@ -37,8 +37,11 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     /** @var ClientRecord[] */
     public $clients = array();
 
-    /** @var array */
+    /** @var array Операционные логи платформы. */
     public $logs = array();
+
+    /** @var array Записи журнала вызовов API. */
+    public $journal = array();
 
     /** @var array */
     public $events = array();
@@ -251,18 +254,40 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
 
     public function write(array $data)
     {
-        $this->logs[] = $data;
+        $this->journal[] = $data;
 
         return true;
     }
 
     public function findByIdempotencyKey($idempotencyKey, $endpointId)
     {
+        if ($idempotencyKey === '') {
+            return null;
+        }
+
+        foreach (array_reverse($this->journal) as $entry) {
+            $matches = isset($entry['idempotency_key']) && $entry['idempotency_key'] === $idempotencyKey
+                && isset($entry['endpoint']) && $entry['endpoint'] === $endpointId
+                && isset($entry['status']) && (int)$entry['status'] < 400;
+
+            if ($matches) {
+                return $entry;
+            }
+        }
+
         return null;
     }
 
     public function purgeOlderThan($before)
     {
-        return 0;
+        $removed = 0;
+        foreach ($this->journal as $index => $entry) {
+            if (isset($entry['createdon']) && (int)$entry['createdon'] < $before) {
+                unset($this->journal[$index]);
+                $removed++;
+            }
+        }
+
+        return $removed;
     }
 }

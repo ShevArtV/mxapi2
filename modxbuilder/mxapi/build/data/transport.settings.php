@@ -24,6 +24,8 @@ $definitions = array(
     'mxapi.trusted_proxies'       => array('value' => '',             'xtype' => 'textfield'),
     // Классы провайдеров эндпоинтов через запятую (пакеты регистрируются здесь либо на событии mxApiOnRegisterEndpoints).
     'mxapi.providers'             => array('value' => '',             'xtype' => 'textarea'),
+    // Дополнительные промежуточные обработчики запроса (MxApi\Core\Middleware\MiddlewareInterface) через запятую.
+    'mxapi.middleware'            => array('value' => '',             'xtype' => 'textarea'),
     // Писать в журнал успешные read-вызовы (write пишутся всегда).
     'mxapi.log_reads'             => array('value' => '0',            'xtype' => 'combo-boolean'),
     // Срок хранения записей журнала, сек. 0 — не чистить.

@@ -28,6 +28,7 @@ class Config
         'rate_limit_per_minute' => 120,
         'trusted_proxies' => array(),
         'providers' => array(),
+        'middleware' => array(),
         'endpoints' => array(),
         'route_aliases' => array(),
         'log_reads' => false,

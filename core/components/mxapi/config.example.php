@@ -22,6 +22,12 @@ return array(
         // 'MsOrderBridge\\MxApi\\OrdersProvider',
     ),
 
+    // Дополнительные промежуточные обработчики запроса (MiddlewareInterface).
+    // Встроенные — лимит частоты и идемпотентность — подключены всегда.
+    'middleware' => array(
+        // 'SgApi\\Middleware\\SignatureCheck',
+    ),
+
     // Проектные эндпоинты. Класс вне автозагрузки пакета — указать file.
     'endpoints' => array(
         // array(

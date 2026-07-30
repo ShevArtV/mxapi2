@@ -22,11 +22,19 @@ class EndpointContext
     /** @var AuthContext|null */
     private $auth;
 
-    public function __construct(PlatformInterface $platform, Config $config, AuthContext $auth = null)
-    {
+    /** @var EndpointMetadata|null */
+    private $metadata;
+
+    public function __construct(
+        PlatformInterface $platform,
+        Config $config,
+        AuthContext $auth = null,
+        EndpointMetadata $metadata = null
+    ) {
         $this->platform = $platform;
         $this->config = $config;
         $this->auth = $auth;
+        $this->metadata = $metadata;
     }
 
     /**
@@ -51,5 +59,16 @@ class EndpointContext
     public function getAuth()
     {
         return $this->auth;
+    }
+
+    /**
+     * Метаданные выполняемого эндпоинта: нужны промежуточным обработчикам,
+     * которым важно, изменяющий ли это запрос и какой у него идентификатор.
+     *
+     * @return EndpointMetadata|null
+     */
+    public function getMetadata()
+    {
+        return $this->metadata;
     }
 }
