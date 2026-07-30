@@ -198,6 +198,107 @@ class KernelTest extends TestCase
         $this->assertNotEmpty($response->getPayload()['data']['access_token']);
     }
 
+    /**
+     * TTL клиента важнее общего, ноль означает «как на сайте». Иначе снизить
+     * время жизни токена одной интеграции можно было бы только всем сразу.
+     */
+    public function testClientTokenTtlOverridesGlobalSetting()
+    {
+        $this->platform->clients = array(
+            new ClientRecord(array(
+                'id' => 7,
+                'client_key' => 'short-lived',
+                'secret_hash' => password_hash('s3cret', PASSWORD_DEFAULT),
+                'user_id' => 2,
+                'scopes' => array('demo.read'),
+                'token_ttl' => 120,
+                'active' => 1,
+            )),
+            new ClientRecord(array(
+                'id' => 8,
+                'client_key' => 'default-ttl',
+                'secret_hash' => password_hash('s3cret', PASSWORD_DEFAULT),
+                'user_id' => 2,
+                'scopes' => array('demo.read'),
+                'token_ttl' => 0,
+                'active' => 1,
+            )),
+        );
+
+        $own = $this->kernel->handle($this->request('POST', '/auth/token', array(), array(
+            'grant_type' => 'client_credentials',
+            'client_id' => 'short-lived',
+            'client_secret' => 's3cret',
+            'scope' => 'demo.read',
+        )));
+
+        $this->assertSame(200, $own->getStatus());
+        $this->assertSame(120, $own->getPayload()['data']['expires_in']);
+
+        $inherited = $this->kernel->handle($this->request('POST', '/auth/token', array(), array(
+            'grant_type' => 'client_credentials',
+            'client_id' => 'default-ttl',
+            'client_secret' => 's3cret',
+            'scope' => 'demo.read',
+        )));
+
+        $this->assertSame(3600, $inherited->getPayload()['data']['expires_in']);
+    }
+
+    /**
+     * Бессрочный токен: клиенту, которому это разрешено явно, выдаётся токен
+     * без срока, и он продолжает работать спустя любое время. Проверяем не
+     * только нули в ответе, но и то, что вызов проходит «в будущем».
+     */
+    public function testNeverExpiringClientTokenKeepsWorking()
+    {
+        $this->platform->clients = array(new ClientRecord(array(
+            'id' => 9,
+            'client_key' => 'forever',
+            'secret_hash' => password_hash('s3cret', PASSWORD_DEFAULT),
+            'user_id' => 2,
+            'scopes' => array('demo.read'),
+            'token_ttl' => ClientRecord::TTL_NEVER,
+            'active' => 1,
+        )));
+
+        $issued = $this->kernel->handle($this->request('POST', '/auth/token', array(), array(
+            'grant_type' => 'client_credentials',
+            'client_id' => 'forever',
+            'client_secret' => 's3cret',
+            'scope' => 'demo.read',
+        )));
+
+        $this->assertSame(200, $issued->getStatus());
+        $this->assertSame(0, $issued->getPayload()['data']['expires_in']);
+        $this->assertNull($issued->getPayload()['data']['expires_at']);
+
+        $token = $issued->getPayload()['data']['access_token'];
+
+        // Год спустя обычный токен был бы просрочен, этот обязан работать.
+        $this->platform->time += 31536000;
+        $response = $this->kernel->handle(
+            $this->request('GET', '/demo/items', array(), array(), array('authorization' => 'Bearer ' . $token))
+        );
+
+        $this->assertSame(200, $response->getStatus());
+    }
+
+    /**
+     * У токена по логину/паролю клиента нет, поэтому TTL всегда общий.
+     */
+    public function testPasswordGrantAlwaysUsesGlobalTtl()
+    {
+        $response = $this->kernel->handle($this->request('POST', '/auth/token', array(), array(
+            'grant_type' => 'password',
+            'username' => 'manager',
+            'password' => 'secret',
+            'scope' => 'demo.read',
+        )));
+
+        $this->assertSame(3600, $response->getPayload()['data']['expires_in']);
+    }
+
     public function testClientIpRestrictionIsEnforced()
     {
         $this->platform->clients = array(new ClientRecord(array(

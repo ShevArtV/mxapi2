@@ -57,3 +57,56 @@ $_lang['setting_mxapi.debug_desc'] = 'Только для отладки: в о�
 
 $_lang['setting_mxapi.catalog_filter'] = 'Что показывать в каталоге';
 $_lang['setting_mxapi.catalog_filter_desc'] = 'all — весь публичный контракт сайта (каталог работает как документация: видно, какие scope существуют); scope — только эндпоинты, которые можно вызвать предъявленным токеном; permission — только те, на которые у пользователя есть право MODX. Ужесточать стоит там, где на сайте несколько независимых интеграций: при all клиент одной видит состав эндпоинтов другой вместе с именами прав.';
+
+/* Вкладка «mxApi» на странице правки пользователя: клиенты интеграции.
+   Клиент — это пара client_id/client_secret, по которой внешняя система
+   получает токен и работает от имени этого пользователя. */
+$_lang['mxapi_client_intro'] = 'Клиенты интеграции работают от имени этого пользователя и ограничены его правами. Секрет показывается один раз — при создании и при перевыпуске.';
+$_lang['mxapi_client_create'] = 'Добавить';
+$_lang['mxapi_client_edit'] = 'Изменить';
+$_lang['mxapi_client_remove'] = 'Удалить';
+$_lang['mxapi_client_regenerate'] = 'Перевыпустить секрет';
+$_lang['mxapi_client_activate'] = 'Включить';
+$_lang['mxapi_client_deactivate'] = 'Отключить';
+
+$_lang['mxapi_client_name'] = 'Название';
+$_lang['mxapi_client_key'] = 'client_id';
+$_lang['mxapi_client_scopes'] = 'Доступ';
+$_lang['mxapi_client_tokens'] = 'Живых токенов';
+$_lang['mxapi_client_createdon'] = 'Создан';
+
+$_lang['mxapi_client_ttl'] = 'Время жизни токена';
+$_lang['mxapi_client_ttl_site'] = 'Как на сайте';
+$_lang['mxapi_client_ttl_custom'] = 'Своё значение';
+$_lang['mxapi_client_ttl_never'] = 'Бессрочно';
+$_lang['mxapi_client_ttl_seconds'] = 'Секунд';
+$_lang['mxapi_client_ttl_sec_short'] = 'сек.';
+$_lang['mxapi_client_ttl_never_warning'] = 'Бессрочный токен не истекает сам: отозвать его можно только вручную — отключением клиента или перевыпуском секрета с отзывом токенов. Включайте для интеграций, которые нельзя научить перевыпуску.';
+
+$_lang['mxapi_client_window_create'] = 'Новый клиент интеграции';
+$_lang['mxapi_client_window_update'] = 'Клиент интеграции';
+$_lang['mxapi_client_scopes_caption'] = 'Что разрешено клиенту. Показаны только те scope, на которые у пользователя есть права MODX.';
+$_lang['mxapi_client_scopes_all'] = 'Все эндпоинты';
+$_lang['mxapi_client_scopes_none_allowed'] = 'Пользователю не выдан доступ к namespace mxapi — выдавать нечего.';
+$_lang['mxapi_client_scopes_none_exist'] = 'На сайте нет ни одного эндпоинта со scope.';
+
+$_lang['mxapi_client_secret_title'] = 'Учётные данные клиента';
+$_lang['mxapi_client_secret_warning'] = 'Секрет показывается один раз. Скопируйте его сейчас: в базе хранится только хэш, и восстановить значение невозможно — останется лишь перевыпустить.';
+$_lang['mxapi_client_secret_copy'] = 'Скопировать секрет';
+$_lang['mxapi_client_secret_copied'] = 'Секрет скопирован';
+$_lang['mxapi_client_remove_confirm'] = 'Удалить клиента вместе с его токенами? Интеграция, которая ими пользуется, перестанет работать сразу.';
+$_lang['mxapi_client_regenerate_confirm'] = 'Будет выпущен новый секрет, старый перестанет работать. Уже выданные токены продолжают действовать до истечения — отзовите их, если секрет скомпрометирован.';
+$_lang['mxapi_client_revoke_tokens'] = 'Отозвать выданные токены';
+
+$_lang['mxapi_client_err_user_ns'] = 'Не указан пользователь.';
+$_lang['mxapi_client_err_user_nf'] = 'Пользователь не найден.';
+$_lang['mxapi_client_err_nf'] = 'Клиент не найден.';
+$_lang['mxapi_client_err_name_ns'] = 'Укажите название клиента.';
+$_lang['mxapi_client_err_scopes_ns'] = 'Выберите хотя бы один scope.';
+$_lang['mxapi_client_err_scope_na'] = 'Scope недоступен этому пользователю: [[+scope]]';
+$_lang['mxapi_client_err_ttl'] = 'Время жизни токена: 0 — как на сайте, -1 — бессрочно, иначе не меньше 60 секунд.';
+$_lang['mxapi_client_err_save'] = 'Не удалось сохранить клиента.';
+$_lang['mxapi_client_err_remove'] = 'Не удалось удалить клиента.';
+
+$_lang['mxapi_client_actions'] = 'Действия';
+$_lang['mxapi_client_regenerate_short'] = 'Перевыпустить';

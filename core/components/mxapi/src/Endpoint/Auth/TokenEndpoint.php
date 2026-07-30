@@ -91,7 +91,9 @@ class TokenEndpoint extends AbstractEndpoint
                     'example' => 'orders.export',
                 ),
             ),
-            'response_description' => 'access_token, token_type, expires_in, expires_at, scope, user.',
+            'response_description' => 'access_token, token_type, expires_in, expires_at, scope, user. '
+                . 'expires_in = 0 и expires_at = null означают бессрочный токен: '
+                . 'такой выдаётся клиенту, которому это разрешено явно.',
             'response_example' => array(
                 'success' => true,
                 'data' => array(

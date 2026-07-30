@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model package="mxapi" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.2">
+<model package="mxapi" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.3">
 
     <!--
         Клиент API (machine-to-machine). Секрет хранится только хэшем.
@@ -21,6 +21,16 @@
         -->
         <field key="contexts" dbtype="text" phptype="json" null="true"/>
         <field key="rate_limit" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <!--
+            Время жизни токенов этого клиента, сек: 0 — общее значение сайта
+            (mxapi.token_ttl), -1 — бессрочно, больше нуля — своё значение.
+            Нужно по той же причине, что и свой rate_limit: ночному обмену с
+            учётной системой удобен длинный токен, мобильному приложению нужен
+            короткий, а общая настройка заставляет выбирать одно на всех.
+            Поле знаковое именно ради -1; в токене «бессрочно» выражается
+            нулём в expireson, который isExpired() и уборка уже понимают.
+        -->
+        <field key="token_ttl" dbtype="integer" precision="11" phptype="integer" null="false" default="0"/>
         <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1" index="index"/>
         <field key="description" dbtype="text" phptype="string" null="true"/>
         <!-- unix timestamp: даты считает и читает PHP, поэтому таймзона MySQL ни на что не влияет -->

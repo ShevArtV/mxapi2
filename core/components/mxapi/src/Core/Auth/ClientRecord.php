@@ -11,6 +11,9 @@ namespace MxApi\Core\Auth;
  */
 class ClientRecord
 {
+    /** Токены клиента не истекают: отзыв только вручную. */
+    const TTL_NEVER = -1;
+
     /** @var int */
     private $id;
 
@@ -38,6 +41,9 @@ class ClientRecord
     /** @var int Персональный лимит запросов в минуту; 0 — общий из настроек. */
     private $rateLimit;
 
+    /** @var int Персональное время жизни токена, сек; 0 — общее из настроек. */
+    private $tokenTtl;
+
     /** @var bool */
     private $active;
 
@@ -49,6 +55,7 @@ class ClientRecord
         $this->secretHash = isset($row['secret_hash']) ? (string)$row['secret_hash'] : '';
         $this->userId = isset($row['user_id']) ? (int)$row['user_id'] : 0;
         $this->rateLimit = isset($row['rate_limit']) ? (int)$row['rate_limit'] : 0;
+        $this->tokenTtl = isset($row['token_ttl']) ? (int)$row['token_ttl'] : 0;
         $this->active = isset($row['active']) ? (bool)$row['active'] : false;
 
         $this->scopes = self::toList(isset($row['scopes']) ? $row['scopes'] : array());
@@ -155,6 +162,27 @@ class ClientRecord
     public function getRateLimit()
     {
         return $this->rateLimit;
+    }
+
+    /**
+     * @return int Секунды; 0 — брать общий из настроек, -1 — бессрочно.
+     */
+    public function getTokenTtl()
+    {
+        return $this->tokenTtl;
+    }
+
+    /**
+     * Бессрочный токен нужен интеграциям, которые невозможно научить
+     * перевыпуску: коробочный обмен, чужой скрипт, оборудование. Плата за это —
+     * секрет, который живёт до ручного отзыва, поэтому режим включается явно, а
+     * не получается случайно из «большого» TTL.
+     *
+     * @return bool
+     */
+    public function tokenNeverExpires()
+    {
+        return $this->tokenTtl === self::TTL_NEVER;
     }
 
     /**

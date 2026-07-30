@@ -72,7 +72,9 @@ class TokenService
             $this->assertPermission($user, $this->permissionForScope($requested));
         }
 
-        return $this->createToken($user, $scopes, 0, $request);
+        // Клиента у пароля нет: TTL и лимиты берутся общие, ограничен такой
+        // токен правами самого пользователя.
+        return $this->createToken($user, $scopes, $request);
     }
 
     /**
@@ -95,7 +97,7 @@ class TokenService
         }
 
         $client = $this->platform->getClientRepository()->findByKey($clientKey);
-        if (!$client || !$client->isActive() || !$this->verifySecret($clientSecret, $client->getSecretHash())) {
+        if (!$client || !$client->isActive() || !ClientSecret::verify($clientSecret, $client->getSecretHash())) {
             throw ApiException::invalidCredentials();
         }
 
@@ -120,7 +122,7 @@ class TokenService
             $this->assertPermission($user, $this->permissionForScope($requested));
         }
 
-        return $this->createToken($user, $scopes, $client->getId(), $request);
+        return $this->createToken($user, $scopes, $request, $client);
     }
 
     /**
@@ -266,21 +268,34 @@ class TokenService
     /**
      * @param PlatformUser $user
      * @param array $scopes
-     * @param int $clientId
      * @param Request $request
+     * @param ClientRecord|null $client Машинный клиент; null — токен по логину/паролю.
      * @return array
      * @throws ApiException
      */
-    private function createToken(PlatformUser $user, array $scopes, $clientId, Request $request)
+    private function createToken(PlatformUser $user, array $scopes, Request $request, ClientRecord $client = null)
     {
         $plainToken = $this->generateToken();
-        $ttl = max(60, $this->config->getInt('token_ttl'));
+        // TTL клиента важнее общего: ночному обмену с учётной системой нужен
+        // длинный токен, мобильному приложению — короткий, и одно значение на
+        // весь сайт заставляло бы выбирать между ними. 0 у клиента — «как на
+        // сайте». Пол в 60 секунд общий: токен короче минуты не переживает
+        // собственную выдачу.
+        $configured = $client && $client->getTokenTtl() > 0
+            ? $client->getTokenTtl()
+            : $this->config->getInt('token_ttl');
+        // Бессрочный токен записывается нулём в expireson: это значение уже
+        // означает «не истекает» и в проверке (TokenRecord::isExpired), и в
+        // уборке (purgeExpired пропускает нули). Отдельного флага не заводим —
+        // два источника правды о сроке жизни разъедутся.
+        $never = $client && $client->tokenNeverExpires();
+        $ttl = $never ? 0 : max(60, $configured);
         $now = $this->platform->now();
-        $expires = $now + $ttl;
+        $expires = $never ? 0 : $now + $ttl;
 
         $record = $this->platform->getTokenRepository()->create(array(
             'token_hash' => $this->hash($plainToken),
-            'client_id' => (int)$clientId,
+            'client_id' => $client ? $client->getId() : 0,
             'user_id' => $user->getId(),
             'username' => $user->getUsername(),
             'scopes' => $scopes,
@@ -297,8 +312,10 @@ class TokenService
         return array(
             'access_token' => $plainToken,
             'token_type' => 'Bearer',
+            // Для бессрочного токена expires_in = 0, expires_at = null: тот же
+            // язык, что у нуля в expireson и у нулевых лимитов в настройках.
             'expires_in' => $ttl,
-            'expires_at' => gmdate('c', $expires),
+            'expires_at' => $never ? null : gmdate('c', $expires),
             'scope' => implode(' ', $scopes),
             'user' => $user->toArray(),
         );
@@ -335,25 +352,6 @@ class TokenService
         if (!IpMatcher::matches($ip, $allowed)) {
             throw ApiException::ipNotAllowed($ip);
         }
-    }
-
-    /**
-     * @param string $secret
-     * @param string $hash
-     * @return bool
-     */
-    private function verifySecret($secret, $hash)
-    {
-        if ($hash === '') {
-            return false;
-        }
-
-        if (strpos($hash, '$') === 0) {
-            return password_verify($secret, $hash);
-        }
-
-        // Исторический формат: sha256 без соли. Сравнение постоянного времени.
-        return hash_equals($hash, hash('sha256', $secret));
     }
 
     /**

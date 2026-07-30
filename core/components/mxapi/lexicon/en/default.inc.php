@@ -54,3 +54,54 @@ $_lang['setting_mxapi.debug_desc'] = 'Debug only: the response carries the excep
 
 $_lang['setting_mxapi.catalog_filter'] = 'Catalog visibility';
 $_lang['setting_mxapi.catalog_filter_desc'] = 'all — the whole public contract (the catalog works as documentation, so integrators can see which scopes exist); scope — only endpoints callable with the presented token; permission — only endpoints the user holds a MODX permission for. Tighten it when several independent integrations share the site: with all, one client sees the other one\'s endpoints along with permission names.';
+
+/* mxApi tab on the user edit page: integration clients. */
+$_lang['mxapi_client_intro'] = 'Integration clients act on behalf of this user and are limited by their permissions. The secret is shown once — on creation and on regeneration.';
+$_lang['mxapi_client_create'] = 'Add';
+$_lang['mxapi_client_edit'] = 'Edit';
+$_lang['mxapi_client_remove'] = 'Delete';
+$_lang['mxapi_client_regenerate'] = 'Regenerate secret';
+$_lang['mxapi_client_activate'] = 'Enable';
+$_lang['mxapi_client_deactivate'] = 'Disable';
+
+$_lang['mxapi_client_name'] = 'Name';
+$_lang['mxapi_client_key'] = 'client_id';
+$_lang['mxapi_client_scopes'] = 'Access';
+$_lang['mxapi_client_tokens'] = 'Live tokens';
+$_lang['mxapi_client_createdon'] = 'Created';
+
+$_lang['mxapi_client_ttl'] = 'Token lifetime';
+$_lang['mxapi_client_ttl_site'] = 'Site default';
+$_lang['mxapi_client_ttl_custom'] = 'Custom value';
+$_lang['mxapi_client_ttl_never'] = 'Never expires';
+$_lang['mxapi_client_ttl_seconds'] = 'Seconds';
+$_lang['mxapi_client_ttl_sec_short'] = 'sec.';
+$_lang['mxapi_client_ttl_never_warning'] = 'A never-expiring token does not lapse on its own: it can only be revoked manually — by disabling the client or regenerating the secret with token revocation. Use it for integrations that cannot be taught to refresh tokens.';
+
+$_lang['mxapi_client_window_create'] = 'New integration client';
+$_lang['mxapi_client_window_update'] = 'Integration client';
+$_lang['mxapi_client_scopes_caption'] = 'What the client is allowed to do. Only scopes the user has MODX permissions for are listed.';
+$_lang['mxapi_client_scopes_all'] = 'All endpoints';
+$_lang['mxapi_client_scopes_none_allowed'] = 'The user has no access to the mxapi namespace — nothing to grant.';
+$_lang['mxapi_client_scopes_none_exist'] = 'This site has no endpoints with a scope.';
+
+$_lang['mxapi_client_secret_title'] = 'Client credentials';
+$_lang['mxapi_client_secret_warning'] = 'The secret is shown once. Copy it now: only a hash is stored, the value cannot be recovered — you would have to regenerate it.';
+$_lang['mxapi_client_secret_copy'] = 'Copy secret';
+$_lang['mxapi_client_secret_copied'] = 'Secret copied';
+$_lang['mxapi_client_remove_confirm'] = 'Delete this client together with its tokens? Any integration using them stops working immediately.';
+$_lang['mxapi_client_regenerate_confirm'] = 'A new secret will be issued and the old one stops working. Tokens already issued remain valid until they expire — revoke them if the secret is compromised.';
+$_lang['mxapi_client_revoke_tokens'] = 'Revoke issued tokens';
+
+$_lang['mxapi_client_err_user_ns'] = 'No user specified.';
+$_lang['mxapi_client_err_user_nf'] = 'User not found.';
+$_lang['mxapi_client_err_nf'] = 'Client not found.';
+$_lang['mxapi_client_err_name_ns'] = 'Enter a client name.';
+$_lang['mxapi_client_err_scopes_ns'] = 'Select at least one scope.';
+$_lang['mxapi_client_err_scope_na'] = 'Scope is not available to this user: [[+scope]]';
+$_lang['mxapi_client_err_ttl'] = 'Token lifetime: 0 — site default, -1 — never expires, otherwise at least 60 seconds.';
+$_lang['mxapi_client_err_save'] = 'Could not save the client.';
+$_lang['mxapi_client_err_remove'] = 'Could not delete the client.';
+
+$_lang['mxapi_client_actions'] = 'Actions';
+$_lang['mxapi_client_regenerate_short'] = 'Regenerate';

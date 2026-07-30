@@ -29,7 +29,8 @@ if ($transport->xpdo) {
             // Пополнять при изменении схемы; на чистой установке цикл ничего не делает.
             $addedFields = array(
                 // Схема 1.2: allow-list контекстов у клиента и контекст в журнале.
-                'mxApiClient' => array('contexts'),
+                // Схема 1.3: собственный TTL токенов клиента.
+                'mxApiClient' => array('contexts', 'token_ttl'),
                 'mxApiToken' => array(),
                 'mxApiLog' => array('context'),
             );
