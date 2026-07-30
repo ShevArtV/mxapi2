@@ -1,11 +1,14 @@
 <?php
 /*
- * Стенд: Hostland. Корень MODX (htdocs стенда): art-sites.ru/htdocs/mspaypalalt/
+ * Стенд: Hostland. Корень MODX (htdocs стенда): art-sites.ru/htdocs/msaltlinks/
+ * (до 30.07.2026 здесь значился mspaypalalt — пакет туда так и не выкладывался;
+ * на msaltlinks стоят miniShop2 и оба пакета связки msorder*, то есть сборка и
+ * smoke провайдера идут на одной площадке).
  * modxbuilder/ лежит внутри корня MODX. Запуск из домашнего каталога (где лежит art-sites.ru):
  *
- * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/mspaypalalt/modxbuilder/mxapi/build/build.schema.php
- * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/mspaypalalt/modxbuilder/mxapi/build/build.models.php
- * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/mspaypalalt/modxbuilder/mxapi/build/build.package.php
+ * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/msaltlinks/modxbuilder/mxapi/build/build.schema.php
+ * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/msaltlinks/modxbuilder/mxapi/build/build.models.php
+ * /usr/local/php/php-7.4/bin/php -d display_errors -d error_reporting=E_ALL art-sites.ru/htdocs/msaltlinks/modxbuilder/mxapi/build/build.package.php
  *
  * ВАЖНО: перед build.package.php в core/components/mxapi/ должен быть выполнен
  * `composer install --no-dev` — пакет везёт свой vendor/ (PSR-4 автозагрузка
@@ -13,7 +16,7 @@
  *
  * Модели и map пишем вручную (схема ниже — источник правды), поэтому
  * build.schema/build.models нужны только при изменении схемы.
- * Готовый .transport.zip появится в art-sites.ru/htdocs/mspaypalalt/core/packages/.
+ * Готовый .transport.zip появится в art-sites.ru/htdocs/msaltlinks/core/packages/.
  */
 
 //If you need to update only builder component files - set COMPONENT_BUILD to true.
@@ -29,7 +32,7 @@ $buildConfig = [
     //name for folder
     "package_name" => "mxapi",
     "package_version" => "1.0.0",
-    "package_release" => "dev",
+    "package_release" => "beta",
     "package_table_prefix" => "mxapi_",
     "package_class_prefix" => "mxapi",
 

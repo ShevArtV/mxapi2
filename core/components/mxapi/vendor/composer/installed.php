@@ -3,7 +3,7 @@
         'name' => 'shevartv/mxapi',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '1bee07a6797c198ea20a7e7e16d41976e60bbf24',
+        'reference' => 'a1112b43abcc3d25e0e25f98d6a78a960a38fd4d',
         'type' => 'modx-extra',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'shevartv/mxapi' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '1bee07a6797c198ea20a7e7e16d41976e60bbf24',
+            'reference' => 'a1112b43abcc3d25e0e25f98d6a78a960a38fd4d',
             'type' => 'modx-extra',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
