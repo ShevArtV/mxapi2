@@ -139,14 +139,32 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
     protected function formatResult(ProcessorResult $result, array $properties)
     {
         if ($result->isList()) {
-            return Response::success($result->getResults(), array(
+            $meta = array(
                 'total' => $result->getTotal(),
                 'limit' => isset($properties['limit']) ? (int)$properties['limit'] : null,
                 'offset' => isset($properties['start']) ? (int)$properties['start'] : 0,
-            ));
+            );
+
+            return Response::success($result->getResults(), array_merge($meta, $this->extraMeta($result->getPayload())));
         }
 
         return Response::success($result->getData());
+    }
+
+    /**
+     * Дополнительные поля meta для списочного ответа.
+     *
+     * Списочные процессоры иногда отдают рядом с results агрегаты по всей
+     * выборке (miniShop2 — суммы и количество заказов за период). В data им не
+     * место, а терять их нельзя: интерфейс, который их показывает, без них
+     * ломается. Провайдер объявляет такие поля здесь.
+     *
+     * @param array $payload Полное тело ответа процессора.
+     * @return array
+     */
+    protected function extraMeta(array $payload)
+    {
+        return array();
     }
 
     /**
