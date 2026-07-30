@@ -33,6 +33,12 @@ $definitions = array(
     'mxapi.providers'             => array('value' => '',             'xtype' => 'textarea', 'area' => 'mxapi'),
     // Дополнительные промежуточные обработчики запроса (MxApi\Core\Middleware\MiddlewareInterface) через запятую.
     'mxapi.middleware'            => array('value' => '',             'xtype' => 'textarea', 'area' => 'mxapi'),
+    // Что показывать в каталоге эндпоинтов и OpenAPI: all — весь публичный
+    // контракт, scope — только вызываемое предъявленным токеном, permission —
+    // только то, на что у пользователя есть право MODX. Дефолт all: каталог
+    // работает как документация. Ужесточать имеет смысл там, где на сайте живут
+    // несколько независимых интеграций.
+    'mxapi.catalog_filter'        => array('value' => 'all',          'xtype' => 'textfield', 'area' => 'mxapi_access'),
     // Писать в журнал успешные read-вызовы (write пишутся всегда).
     'mxapi.log_reads'             => array('value' => '0',            'xtype' => 'combo-boolean', 'area' => 'mxapi_log'),
     // Срок хранения записей журнала, сек. 0 — не чистить.

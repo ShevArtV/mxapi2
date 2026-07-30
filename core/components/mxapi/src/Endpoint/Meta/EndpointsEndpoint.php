@@ -6,6 +6,7 @@ use MxApi\Core\Endpoint\AbstractEndpoint;
 use MxApi\Core\Endpoint\EndpointContext;
 use MxApi\Core\Http\Request;
 use MxApi\Core\Http\Response;
+use MxApi\Core\Registry\CatalogFilter;
 use MxApi\Core\Registry\EndpointRegistry;
 
 /**
@@ -47,7 +48,7 @@ class EndpointsEndpoint extends AbstractEndpoint
     public function handle(Request $request, EndpointContext $context)
     {
         $items = array();
-        foreach ($this->registry->publicOnly() as $endpoint) {
+        foreach (CatalogFilter::apply($this->registry, $context)->all() as $endpoint) {
             // Публичное представление: без имён процессоров и маппинга полей.
             $items[] = $endpoint->getMetadata()->toPublicArray();
         }
@@ -55,6 +56,9 @@ class EndpointsEndpoint extends AbstractEndpoint
         return Response::success($items, array(
             'count' => count($items),
             'route_prefix' => $context->getConfig()->get('route_prefix'),
+            // Чтобы по короткому каталогу было понятно, что он урезан режимом,
+            // а не что эндпоинтов на сайте нет.
+            'filter' => $context->getConfig()->get('catalog_filter'),
         ));
     }
 }

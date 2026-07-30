@@ -26,6 +26,7 @@ if ($transport->xpdo) {
         'mxapi.token_ttl' => 'mxapi_access',
         'mxapi.trusted_proxies' => 'mxapi_access',
         'mxapi.cors_origins' => 'mxapi_access',
+        'mxapi.catalog_filter' => 'mxapi_access',
         'mxapi.default_limit' => 'mxapi_limits',
         'mxapi.max_limit' => 'mxapi_limits',
         'mxapi.rate_limit_per_minute' => 'mxapi_limits',

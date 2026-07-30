@@ -7,6 +7,7 @@ use MxApi\Core\Endpoint\EndpointContext;
 use MxApi\Core\Http\Request;
 use MxApi\Core\Http\Response;
 use MxApi\Core\OpenApi\OpenApiGenerator;
+use MxApi\Core\Registry\CatalogFilter;
 use MxApi\Core\Registry\EndpointRegistry;
 
 /**
@@ -48,7 +49,7 @@ class OpenApiEndpoint extends AbstractEndpoint
      */
     public function handle(Request $request, EndpointContext $context)
     {
-        $generator = new OpenApiGenerator($this->registry, $context->getConfig());
+        $generator = new OpenApiGenerator(CatalogFilter::apply($this->registry, $context), $context->getConfig());
 
         // Документ отдаётся как есть, без конверта success/data: иначе его не
         // примет ни один инструмент, работающий с OpenAPI.

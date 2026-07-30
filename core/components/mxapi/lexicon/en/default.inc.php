@@ -55,3 +55,6 @@ $_lang['setting_mxapi.cors_origins'] = 'Allowed CORS origins';
 $_lang['setting_mxapi.cors_origins_desc'] = 'Comma separated; "*" allows any. Empty means no CORS headers.';
 $_lang['setting_mxapi.debug'] = 'Expose internal error details';
 $_lang['setting_mxapi.debug_desc'] = 'Debug only: the response carries the exception message. Keep it off in production.';
+
+$_lang['setting_mxapi.catalog_filter'] = 'Catalog visibility';
+$_lang['setting_mxapi.catalog_filter_desc'] = 'all — the whole public contract (the catalog works as documentation, so integrators can see which scopes exist); scope — only endpoints callable with the presented token; permission — only endpoints the user holds a MODX permission for. Tighten it when several independent integrations share the site: with all, one client sees the other one\'s endpoints along with permission names.';

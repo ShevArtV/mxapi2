@@ -38,6 +38,8 @@ class Config
         'middleware' => array(),
         'endpoints' => array(),
         'route_aliases' => array(),
+        // Что показывать в каталоге и OpenAPI: all | scope | permission.
+        'catalog_filter' => 'all',
         'log_reads' => false,
         'log_lifetime' => 2592000,
         'cors_origins' => array(),

@@ -56,6 +56,7 @@ class Bootstrap
             'trusted_proxies' => $modx->getOption('mxapi.trusted_proxies', null, ''),
             'providers' => $modx->getOption('mxapi.providers', null, ''),
             'middleware' => $modx->getOption('mxapi.middleware', null, ''),
+            'catalog_filter' => $modx->getOption('mxapi.catalog_filter', null, 'all'),
             'log_reads' => (bool)$modx->getOption('mxapi.log_reads', null, false),
             'log_lifetime' => (int)$modx->getOption('mxapi.log_lifetime', null, 2592000),
             'cors_origins' => $modx->getOption('mxapi.cors_origins', null, ''),
