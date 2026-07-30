@@ -29,8 +29,8 @@ mxApi
 Требования
 ----------
 
-- MODX Revolution 2.x
-- PHP 7.2+
+- MODX Revolution 2.6+
+- PHP 7.4+
 - Пакет везёт собственный vendor/ (composer, PSR-4). При сборке из исходников
   выполнить в core/components/mxapi/: composer install --no-dev
 
