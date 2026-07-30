@@ -54,14 +54,19 @@ class mxApiIndexManagerController extends modExtraManagerController
         $this->addCss($this->assetsUrl . 'css/mgr/main.css' . $version('css/mgr/main.css'));
         $this->addJavascript($this->assetsUrl . 'js/mgr/mxapi.js' . $version('js/mgr/mxapi.js'));
 
+        // ⚠️ Только дописываем config в существующий объект. Присваивание
+        // MxApi = {config: …} затирало объект, объявленный в mxapi.js, вместе с
+        // его методами — страница падала на «MxApi.init is not a function», и
+        // каталог оставался пустым.
         $this->addHtml('<script type="text/javascript">
-        MxApi = { config: ' . $this->modx->toJSON(array(
+        var MxApi = window.MxApi || {};
+        MxApi.config = ' . $this->modx->toJSON(array(
             'connector_url' => $this->assetsUrl . 'connector.php',
             'assets_url' => $this->assetsUrl,
             'route_prefix' => $this->modx->getOption('mxapi.route_prefix', null, '/mxapi/v1'),
             'site_url' => rtrim($this->modx->getOption('site_url'), '/'),
             'enabled' => (bool)$this->modx->getOption('mxapi.enabled', null, true),
-        )) . ' };
+        )) . ';
         Ext.onReady(function () { MxApi.init(); });
         </script>');
     }

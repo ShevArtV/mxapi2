@@ -15,6 +15,16 @@ MxApi.state = {
     provider: ''
 };
 
+/**
+ * Токен сессии менеджера. Коннектор MODX без HTTP_MODAUTH отвечает 401
+ * «Доступ запрещён» — MODx.Ajax подставляет его сам, а наш ручной XHR обязан
+ * передать явно. MODx.siteId — тот самый токен (modManagerController отдаёт его
+ * в layout как auth).
+ */
+MxApi.authToken = function () {
+    return (typeof MODx !== 'undefined' && MODx.siteId) ? MODx.siteId : '';
+};
+
 MxApi.init = function () {
     var root = document.getElementById('mxapi-catalog');
     if (!root) {
@@ -52,14 +62,24 @@ MxApi.load = function (root) {
         root.innerHTML = '<div class="mxapi-error">Соединение с коннектором не установлено.</div>';
     };
 
-    request.send('action=mgr/endpoints/getlist');
+    request.send('action=mgr/endpoints/getlist&HTTP_MODAUTH=' + encodeURIComponent(MxApi.authToken()));
 };
 
 MxApi.render = function (root) {
     MxApi.applyFilters();
 
+    // Перерисовываем список целиком, поэтому позицию прокрутки надо сохранить
+    // руками: иначе раскрытие описания отбрасывало страницу в самое начало.
+    var previous = root.querySelector('.mxapi-list');
+    var scrollTop = previous ? previous.scrollTop : 0;
+
     root.innerHTML = MxApi.renderHeader() + MxApi.renderList();
     MxApi.bind(root);
+
+    var current = root.querySelector('.mxapi-list');
+    if (current) {
+        current.scrollTop = scrollTop;
+    }
 };
 
 MxApi.renderHeader = function () {
@@ -83,7 +103,7 @@ MxApi.renderHeader = function () {
         '<div class="mxapi-toolbar">' +
             '<input type="search" id="mxapi-search" class="mxapi-search" placeholder="Поиск по маршруту, scope, праву…" value="' + MxApi.escape(MxApi.state.query) + '">' +
             '<select id="mxapi-provider" class="mxapi-provider">' + options.join('') + '</select>' +
-            '<a class="mxapi-button" href="' + MxApi.config.connector_url + '?action=mgr/openapi/get&download=1" target="_blank" rel="noopener">Скачать OpenAPI</a>' +
+            '<button type="button" class="mxapi-button" id="mxapi-openapi">Скачать OpenAPI</button>' +
         '</div>' +
         '<div class="mxapi-base">Базовый адрес: <code>' + MxApi.escape(MxApi.config.site_url + MxApi.config.route_prefix) + '</code> · ' +
             'эндпоинтов: ' + MxApi.state.filtered.length + ' из ' + MxApi.state.endpoints.length +
@@ -136,7 +156,7 @@ MxApi.renderItem = function (endpoint) {
         '<div class="mxapi-item' + (expanded ? ' mxapi-item-open' : '') + '" data-id="' + MxApi.escape(endpoint.id) + '">' +
             '<div class="mxapi-item-head" data-toggle="' + MxApi.escape(endpoint.id) + '">' +
                 '<span class="mxapi-methods">' + badges + '</span>' +
-                '<code class="mxapi-path">' + MxApi.escape(endpoint.path) + '</code>' +
+                '<code class="mxapi-path">' + MxApi.escape(endpoint.public_path || endpoint.path) + '</code>' +
                 '<span class="mxapi-title">' + MxApi.escape(endpoint.title) + '</span>' +
                 '<span class="mxapi-provider-tag">' + MxApi.escape(endpoint.provider) + '</span>' +
             '</div>' +
@@ -163,13 +183,17 @@ MxApi.contextLabel = function (endpoint) {
 MxApi.renderDetails = function (endpoint) {
     var rows = [
         ['Идентификатор', '<code>' + MxApi.escape(endpoint.id) + '</code>'],
-        ['Полный адрес', '<code>' + MxApi.escape(MxApi.config.site_url + MxApi.config.route_prefix + endpoint.path) + '</code>'],
+        ['Полный адрес', '<code>' + MxApi.escape(MxApi.config.site_url + MxApi.config.route_prefix + (endpoint.public_path || endpoint.path)) + '</code>'],
         ['Scope', endpoint.scope ? '<code>' + MxApi.escape(endpoint.scope) + '</code>' : '<span class="mxapi-muted">не требуется</span>'],
         ['Право MODX', endpoint.permission ? '<code>' + MxApi.escape(endpoint.permission) + '</code>' : '<span class="mxapi-muted">не требуется</span>'],
         ['Аутентификация', endpoint.auth === 'none' ? '<span class="mxapi-muted">не требуется</span>' : 'Bearer-токен'],
         ['Контекст MODX', MxApi.contextLabel(endpoint)],
         ['Источник', MxApi.escape(endpoint.provider)]
     ];
+
+    if (endpoint.public_path && endpoint.public_path !== endpoint.path) {
+        rows.push(['Шаблон маршрута', '<code>' + MxApi.escape(endpoint.path) + '</code>']);
+    }
 
     if (endpoint.processor) {
         rows.push(['Процессор', '<code>' + MxApi.escape(endpoint.processor) + '</code>']);
@@ -235,6 +259,38 @@ MxApi.renderExample = function (endpoint) {
     return '<pre class="mxapi-curl">' + MxApi.escape(command) + '</pre>';
 };
 
+/**
+ * Выгрузка OpenAPI файлом.
+ *
+ * Отправляется формой, а не ссылкой: коннектору нужен HTTP_MODAUTH, а в адресной
+ * строке токену сессии не место — он попал бы в историю браузера и логи прокси.
+ */
+MxApi.downloadOpenApi = function () {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = MxApi.config.connector_url;
+    form.target = '_blank';
+    form.style.display = 'none';
+
+    var fields = {
+        action: 'mgr/openapi/get',
+        download: '1',
+        HTTP_MODAUTH: MxApi.authToken()
+    };
+
+    Object.keys(fields).forEach(function (name) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = fields[name];
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+};
+
 MxApi.bind = function (root) {
     var search = document.getElementById('mxapi-search');
     if (search) {
@@ -257,11 +313,27 @@ MxApi.bind = function (root) {
         });
     }
 
+    var openapi = document.getElementById('mxapi-openapi');
+    if (openapi) {
+        openapi.addEventListener('click', function () {
+            MxApi.downloadOpenApi();
+        });
+    }
+
     root.querySelectorAll('[data-toggle]').forEach(function (element) {
         element.addEventListener('click', function () {
             var id = this.getAttribute('data-toggle');
             MxApi.state.expanded[id] = !MxApi.state.expanded[id];
             MxApi.render(root);
+
+            // Раскрытая карточка может уйти за нижний край — подтягиваем её в
+            // видимую часть, но не дальше необходимого.
+            if (MxApi.state.expanded[id]) {
+                var item = root.querySelector('[data-id="' + id.replace(/"/g, '\\"') + '"]');
+                if (item && item.scrollIntoView) {
+                    item.scrollIntoView({block: 'nearest'});
+                }
+            }
         });
     });
 };

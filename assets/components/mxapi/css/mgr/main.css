@@ -4,6 +4,14 @@
 #mxapi-catalog {
     padding: 12px 4px;
     font-size: 13px;
+    /* Менеджер MODX построен на ExtJS-лейауте и держит body в overflow: hidden,
+       поэтому длинная страница сама не прокручивается — нижние эндпоинты были
+       просто недоступны. Высоту берём от вьюпорта, а прокручиваем список внутри:
+       так поиск, фильтр и выгрузка OpenAPI остаются на месте. */
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 110px);
+    min-height: 320px;
 }
 
 .mxapi-loading,
@@ -13,6 +21,7 @@
     padding: 12px 14px;
     border-radius: 4px;
     margin-bottom: 12px;
+    flex: 0 0 auto;
 }
 
 .mxapi-loading,
@@ -39,6 +48,7 @@
     gap: 8px;
     align-items: center;
     margin-bottom: 8px;
+    flex: 0 0 auto;
 }
 
 .mxapi-search {
@@ -71,6 +81,15 @@
 .mxapi-base {
     margin-bottom: 12px;
     color: #777;
+    flex: 0 0 auto;
+}
+
+.mxapi-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* Место для рамки последнего элемента, чтобы она не липла к краю. */
+    padding-right: 2px;
 }
 
 .mxapi-item {

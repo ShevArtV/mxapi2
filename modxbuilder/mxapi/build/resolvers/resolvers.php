@@ -20,6 +20,10 @@ return array(
             'source' => $this->config['resolvers'] . 'resolver.tables.php',
         ),
         array(
+            // Раскладка настроек по областям и уборка строк без ключа.
+            'source' => $this->config['resolvers'] . 'resolver.settings.php',
+        ),
+        array(
             'source' => $this->config['resolvers'] . 'resolver.acl.php',
         ),
         array(

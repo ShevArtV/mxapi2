@@ -42,6 +42,9 @@ class mxApiEndpointGetListProcessor extends modProcessor
             $row = $metadata->toArray();
             $row['methods_text'] = implode(', ', $metadata->getMethods());
             $row['public'] = $metadata->isPublic();
+            // Читаемый маршрут для списка; шаблон роутера остаётся в path и
+            // показывается в деталях — админу он нужен, но в заголовке шумит.
+            $row['public_path'] = $metadata->getPublicPath();
 
             if ($provider !== '' && $metadata->getProvider() !== $provider) {
                 continue;
