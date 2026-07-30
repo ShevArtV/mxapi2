@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model package="mxapi" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.1">
+
+    <!--
+        Клиент API (machine-to-machine). Секрет хранится только хэшем.
+        Клиент привязан к MODX-пользователю: от его имени выполняются процессоры,
+        по нему же работают штатные проверки прав MODX/miniShop2.
+    -->
+    <object class="mxApiClient" table="mxapi_client" extends="xPDOSimpleObject">
+        <field key="name" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+        <field key="client_key" dbtype="varchar" precision="100" phptype="string" null="false" default="" index="unique"/>
+        <field key="secret_hash" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="user_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="scopes" dbtype="text" phptype="json" null="true"/>
+        <field key="allowed_ips" dbtype="text" phptype="string" null="true"/>
+        <field key="rate_limit" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1" index="index"/>
+        <field key="description" dbtype="text" phptype="string" null="true"/>
+        <!-- unix timestamp: даты считает и читает PHP, поэтому таймзона MySQL ни на что не влияет -->
+        <field key="createdon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="editedon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0"/>
+
+        <index alias="client_key" name="client_key" primary="false" unique="true" type="BTREE">
+            <column key="client_key" length="" collation="A" null="false"/>
+        </index>
+        <index alias="user_id" name="user_id" primary="false" unique="false" type="BTREE">
+            <column key="user_id" length="" collation="A" null="false"/>
+        </index>
+        <index alias="active" name="active" primary="false" unique="false" type="BTREE">
+            <column key="active" length="" collation="A" null="false"/>
+        </index>
+
+        <composite alias="Tokens" class="mxApiToken" local="id" foreign="client_id" cardinality="many" owner="local"/>
+    </object>
+
+    <!--
+        Выданный bearer-токен. В БД лежит только sha256-хэш: утечка таблицы не
+        даёт доступа. client_id = 0 для токенов, выданных по логину/паролю.
+    -->
+    <object class="mxApiToken" table="mxapi_token" extends="xPDOSimpleObject">
+        <field key="token_hash" dbtype="char" precision="64" phptype="string" null="false" default="" index="unique"/>
+        <field key="client_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="user_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="username" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+        <field key="scopes" dbtype="text" phptype="json" null="true"/>
+        <field key="createdon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="expireson" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="last_usedon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="revokedon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="user_agent" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="ip" dbtype="varchar" precision="45" phptype="string" null="false" default=""/>
+
+        <index alias="token_hash" name="token_hash" primary="false" unique="true" type="BTREE">
+            <column key="token_hash" length="" collation="A" null="false"/>
+        </index>
+        <index alias="client_id" name="client_id" primary="false" unique="false" type="BTREE">
+            <column key="client_id" length="" collation="A" null="false"/>
+        </index>
+        <index alias="user_id" name="user_id" primary="false" unique="false" type="BTREE">
+            <column key="user_id" length="" collation="A" null="false"/>
+        </index>
+        <index alias="expireson" name="expireson" primary="false" unique="false" type="BTREE">
+            <column key="expireson" length="" collation="A" null="false"/>
+        </index>
+        <index alias="revokedon" name="revokedon" primary="false" unique="false" type="BTREE">
+            <column key="revokedon" length="" collation="A" null="false"/>
+        </index>
+
+        <aggregate alias="Client" class="mxApiClient" local="client_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+
+    <!--
+        Журнал вызовов. Пишется всегда для write-эндпоинтов, для read — по
+        настройке mxapi.log_reads. Источник данных для аудита и idempotency.
+    -->
+    <object class="mxApiLog" table="mxapi_log" extends="xPDOSimpleObject">
+        <field key="createdon" dbtype="integer" precision="20" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="client_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="user_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="endpoint" dbtype="varchar" precision="191" phptype="string" null="false" default="" index="index"/>
+        <field key="route" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="method" dbtype="varchar" precision="10" phptype="string" null="false" default=""/>
+        <field key="status" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
+        <field key="error_code" dbtype="varchar" precision="64" phptype="string" null="false" default=""/>
+        <field key="duration_ms" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="ip" dbtype="varchar" precision="45" phptype="string" null="false" default=""/>
+        <field key="actor" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+        <field key="idempotency_key" dbtype="varchar" precision="100" phptype="string" null="false" default="" index="index"/>
+        <field key="request_summary" dbtype="mediumtext" phptype="json" null="true"/>
+        <field key="response_summary" dbtype="mediumtext" phptype="json" null="true"/>
+
+        <index alias="createdon" name="createdon" primary="false" unique="false" type="BTREE">
+            <column key="createdon" length="" collation="A" null="false"/>
+        </index>
+        <index alias="client_id" name="client_id" primary="false" unique="false" type="BTREE">
+            <column key="client_id" length="" collation="A" null="false"/>
+        </index>
+        <index alias="user_id" name="user_id" primary="false" unique="false" type="BTREE">
+            <column key="user_id" length="" collation="A" null="false"/>
+        </index>
+        <index alias="endpoint" name="endpoint" primary="false" unique="false" type="BTREE">
+            <column key="endpoint" length="" collation="A" null="false"/>
+        </index>
+        <index alias="status" name="status" primary="false" unique="false" type="BTREE">
+            <column key="status" length="" collation="A" null="false"/>
+        </index>
+        <index alias="idempotency_key" name="idempotency_key" primary="false" unique="false" type="BTREE">
+            <column key="idempotency_key" length="" collation="A" null="false"/>
+        </index>
+    </object>
+
+</model>

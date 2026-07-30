@@ -1,0 +1,37 @@
+{
+  "name": "shevartv/mxapi",
+  "description": "mxApi — единая точка входа публичного API для MODX Revolution 2",
+  "type": "modx-extra",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "ShevArtV",
+      "homepage": "https://github.com/ShevArtV"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "nikic/fast-route": "^1.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "MxApi\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MxApi\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "7.4.33"
+    },
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

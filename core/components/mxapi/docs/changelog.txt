@@ -1,0 +1,7 @@
+1.0.0-dev
+==============
+- BUILD: каркас пакета: билдер modxbuilder/mxapi, composer-автозагрузка PSR-4 (MxApi\ → src/), зависимость nikic/fast-route.
+- FEATURE: модель данных — mxApiClient (клиенты интеграций, секрет только хэшем), mxApiToken (bearer-токены, в БД только sha256-хэш), mxApiLog (журнал вызовов и аудит).
+- FEATURE: политика доступа mxapiTemplate/mxapiDefault с обязательным правом load — без него non-sudo пользователь получал отказ ещё до проверки прав эндпоинта.
+- FEATURE: системные события mxApiOnRegisterEndpoints, mxApiOnBeforeRequest, mxApiOnBeforeEndpointRun, mxApiOnAfterEndpointRun, mxApiOnResponse.
+- FEATURE: системные настройки: префикс маршрутов, TTL токена, пагинация, лимит запросов, доверенные прокси, список провайдеров, журналирование, CORS.

@@ -1,0 +1,8 @@
+mxApi — единая точка входа публичного API для MODX Revolution 2.
+
+Распространяется на условиях GNU GPL v2 или (на ваш выбор) любой более поздней версии.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.

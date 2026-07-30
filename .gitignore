@@ -1,0 +1,20 @@
+# IDE
+/.idea/
+/.vscode/
+
+# Граф кода (локальный индекс)
+/.codegraph/
+
+# Собранные transport-пакеты (артефакты сборки)
+/core/packages/
+
+# Composer: vendor собирается при сборке пакета (composer install --no-dev)
+/core/components/mxapi/vendor/
+/core/components/mxapi/composer.lock
+
+# Проектная конфигурация конкретного сайта — не наша
+/core/config/mxapi.php
+
+# Локальный мусор
+*.log
+.DS_Store
