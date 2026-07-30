@@ -90,6 +90,16 @@ class ApiException extends \Exception
         return new self('invalid_scope', 'Неизвестный scope: ' . $scope, 400, array('scope' => $scope));
     }
 
+    public static function unknownContext($context)
+    {
+        return new self(
+            'unknown_context',
+            'Контекст не найден или недоступен: ' . $context,
+            400,
+            array('context' => $context)
+        );
+    }
+
     /* --- 401 --- */
 
     public static function tokenRequired()
@@ -147,6 +157,21 @@ class ApiException extends \Exception
     public static function ipNotAllowed($ip)
     {
         return new self('ip_not_allowed', 'IP-адрес не разрешён.', 403, array('ip' => $ip));
+    }
+
+    /**
+     * Контекст существует, но этому клиенту он не разрешён (или запрос контекста
+     * выключен настройкой). Отдельный код от unknown_context: «нет такого сайта»
+     * и «сюда тебе нельзя» — разные ситуации для вызывающей системы.
+     */
+    public static function contextNotAllowed($context)
+    {
+        return new self(
+            'context_not_allowed',
+            'Контекст не разрешён для этого клиента: ' . $context,
+            403,
+            array('context' => $context)
+        );
     }
 
     /* --- 404 / 405 --- */

@@ -40,6 +40,8 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
             $options['processors_path'] = $processorsPath;
         }
 
+        $this->beforeRun($properties, $context);
+
         $result = $context->getPlatform()->runProcessor($processor, $properties, $options);
 
         if (!$result->isSuccess()) {
@@ -51,7 +53,44 @@ abstract class ProcessorEndpoint extends AbstractEndpoint
             );
         }
 
+        $payload = $this->transformPayload($result->getPayload(), $context);
+        if ($payload !== $result->getPayload()) {
+            $result = new ProcessorResult(true, $payload, $result->getMessage(), $result->getErrors());
+        }
+
         return $this->formatResult($result, $properties);
+    }
+
+    /**
+     * Подготовка окружения процессора: загрузка лексиконов, рантайм-настройки,
+     * доп. свойства. Вызывается после сборки свойств, до запуска процессора.
+     *
+     * Нужна провайдерам: например, процессоры miniShop2 строят подписи кнопок из
+     * лексиконов, которые в API-режиме никто не загрузил, а состав колонок грида
+     * задаётся системной настройкой. Без этого хука провайдеру пришлось бы
+     * копировать весь handle().
+     *
+     * @param array $properties Свойства процессора; можно менять.
+     * @param EndpointContext $context
+     * @return void
+     */
+    protected function beforeRun(array &$properties, EndpointContext $context)
+    {
+    }
+
+    /**
+     * Постобработка тела ответа процессора до сборки конверта API.
+     *
+     * Здесь живёт доменная нормализация провайдера (например резолв полей
+     * связанных сущностей в строки заказа) — ядру такие правила знать нельзя.
+     *
+     * @param array $payload
+     * @param EndpointContext $context
+     * @return array
+     */
+    protected function transformPayload(array $payload, EndpointContext $context)
+    {
+        return $payload;
     }
 
     /**

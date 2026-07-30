@@ -28,9 +28,10 @@ if ($transport->xpdo) {
             // Поля, добавленные после первого релиза: класс => список полей.
             // Пополнять при изменении схемы; на чистой установке цикл ничего не делает.
             $addedFields = array(
-                'mxApiClient' => array(),
+                // Схема 1.2: allow-list контекстов у клиента и контекст в журнале.
+                'mxApiClient' => array('contexts'),
                 'mxApiToken' => array(),
-                'mxApiLog' => array(),
+                'mxApiLog' => array('context'),
             );
 
             foreach (array('mxApiClient', 'mxApiToken', 'mxApiLog') as $class) {

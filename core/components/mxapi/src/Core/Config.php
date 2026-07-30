@@ -22,6 +22,13 @@ class Config
     private static $defaults = array(
         'enabled' => true,
         'route_prefix' => '/mxapi/v1',
+        // Контекст MODX по умолчанию: в нём проверяются права и выполняются
+        // процессоры, если эндпоинт не объявил свой.
+        'context' => 'mgr',
+        // Разрешить вызывающей системе выбирать контекст заголовком
+        // X-MxApi-Context. Выключено: контекст из запроса расширяет поверхность
+        // атаки, включаться должно осознанно.
+        'allow_request_context' => false,
         'token_ttl' => 86400,
         'default_limit' => 100,
         'max_limit' => 1000,

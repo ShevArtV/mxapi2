@@ -33,6 +33,9 @@ class Modx2Platform implements PlatformInterface
     /** @var \modUser|null Кэш объекта текущего пользователя. */
     private $runtimeUser;
 
+    /** @var PlatformUser|null Кто выполняет запрос: нужен для повторной привязки после смены контекста. */
+    private $runtimePlatformUser;
+
     /** @var bool */
     private $packageLoaded = false;
 
@@ -135,6 +138,54 @@ class Modx2Platform implements PlatformInterface
     /**
      * {@inheritdoc}
      */
+    public function getContextKey()
+    {
+        return is_object($this->modx->context) ? (string)$this->modx->context->get('key') : '';
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * ⚠️ modX::switchContext() → _initContext() при уже инициализированном MODX
+     * выполняет `$this->user = null; $this->getUser();` (modx.class.php:2459) —
+     * то есть сбрасывает подставленного нами пользователя и берёт его из сессии.
+     * Поэтому после переключения пользователь привязывается заново, иначе
+     * процессор побежал бы от анонима, причём молча.
+     */
+    public function useContext($key)
+    {
+        $key = trim((string)$key);
+        if ($key === '') {
+            return false;
+        }
+
+        if ($this->getContextKey() === $key) {
+            return true;
+        }
+
+        if (!$this->modx->switchContext($key)) {
+            $this->log('warning', 'Не удалось переключиться в контекст: ' . $key);
+
+            return false;
+        }
+
+        $this->runtimeUser = null;
+        $this->permissionCache = array();
+
+        if ($this->runtimePlatformUser) {
+            $this->setRuntimeUser($this->runtimePlatformUser);
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Атрибуты доступа перезагружаются принудительно и под текущий контекст:
+     * modUser кэширует их в сессии (moduser.class.php:162-186), а в API-режиме
+     * сессия анонимная и могла бы отдать чужой или устаревший набор ACL.
+     */
     public function setRuntimeUser(PlatformUser $user)
     {
         $modxUser = $this->getModxUser($user->getId());
@@ -143,8 +194,12 @@ class Modx2Platform implements PlatformInterface
         }
 
         $this->runtimeUser = $modxUser;
+        $this->runtimePlatformUser = $user;
         $this->modx->user = $modxUser;
         $this->permissionCache = array();
+
+        $this->ensureSession();
+        $modxUser->getAttributes(array(), $this->getContextKey(), true);
     }
 
     /**
@@ -293,6 +348,20 @@ class Modx2Platform implements PlatformInterface
             return false;
         }
 
+        // ⚠️ modAccessibleObject::checkPolicy() выполняет проверку только при
+        // SESSION_STATE_INITIALIZED, а иначе возвращает true
+        // (modaccessibleobject.class.php:214). То есть без сессии любая проверка
+        // прав молча превращается в «разрешено». Fail-closed: нет проверяемой
+        // сессии — нет доступа.
+        if (!$this->ensureSession()) {
+            $this->log('error', 'Состояние сессии не позволяет проверить права — доступ запрещён.', array(
+                'permission' => $permission,
+                'context' => $this->getContextKey(),
+            ));
+
+            return false;
+        }
+
         /** @var \modNamespace $namespace */
         $namespace = $this->modx->getObject('modNamespace', array('name' => 'mxapi'));
         if (!$namespace) {
@@ -318,6 +387,29 @@ class Modx2Platform implements PlatformInterface
         }
 
         return (bool)$namespace->checkPolicy($permission, null, $modxUser);
+    }
+
+    /**
+     * Приводит сессию в состояние, при котором проверка прав вообще работает.
+     *
+     * modX::startSession() поднимает SESSION_STATE_INITIALIZED, если сессия ещё
+     * не начиналась (modx.class.php:2354). В веб-запросе MODX обычно стартует её
+     * сам (_initSession при anonymous_sessions), но полагаться на настройку,
+     * которую администратор может выключить, нельзя. В CLI (XPDO_CLI_MODE) и
+     * после отправки заголовков состояние принципиально недоступно — там проверка
+     * прав невозможна, и это честнее сообщить, чем пропустить запрос.
+     *
+     * @return bool
+     */
+    private function ensureSession()
+    {
+        if ($this->modx->getSessionState() === \modX::SESSION_STATE_INITIALIZED) {
+            return true;
+        }
+
+        $this->modx->startSession();
+
+        return $this->modx->getSessionState() === \modX::SESSION_STATE_INITIALIZED;
     }
 
     /**

@@ -32,6 +32,9 @@ class ClientRecord
     /** @var array */
     private $allowedIps;
 
+    /** @var array Контексты MODX, разрешённые клиенту; пусто — только контекст по умолчанию. */
+    private $contexts;
+
     /** @var int Персональный лимит запросов в минуту; 0 — общий из настроек. */
     private $rateLimit;
 
@@ -50,6 +53,7 @@ class ClientRecord
 
         $this->scopes = self::toList(isset($row['scopes']) ? $row['scopes'] : array());
         $this->allowedIps = self::toList(isset($row['allowed_ips']) ? $row['allowed_ips'] : array());
+        $this->contexts = self::toList(isset($row['contexts']) ? $row['contexts'] : array());
     }
 
     /**
@@ -115,6 +119,34 @@ class ClientRecord
     public function getAllowedIps()
     {
         return $this->allowedIps;
+    }
+
+    /**
+     * @return array Пустой список = разрешён только контекст по умолчанию.
+     */
+    public function getContexts()
+    {
+        return $this->contexts;
+    }
+
+    /**
+     * Разрешён ли клиенту контекст MODX.
+     *
+     * Пустой список трактуется как «только контекст по умолчанию», а не «любой»:
+     * иначе на мультисайте клиент, которому просто не заполнили поле, получал бы
+     * доступ ко всем сайтам сразу. Явное `*` разрешает любой контекст.
+     *
+     * @param string $context Запрашиваемый контекст.
+     * @param string $default Контекст по умолчанию из конфигурации.
+     * @return bool
+     */
+    public function allowsContext($context, $default = '')
+    {
+        if (empty($this->contexts)) {
+            return $default !== '' && $context === $default;
+        }
+
+        return in_array('*', $this->contexts, true) || in_array($context, $this->contexts, true);
     }
 
     /**

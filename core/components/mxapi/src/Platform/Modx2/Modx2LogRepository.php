@@ -33,6 +33,7 @@ class Modx2LogRepository implements LogRepositoryInterface
                 'client_id' => isset($data['client_id']) ? (int)$data['client_id'] : 0,
                 'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : 0,
                 'endpoint' => isset($data['endpoint']) ? (string)$data['endpoint'] : '',
+                'context' => isset($data['context']) ? substr((string)$data['context'], 0, 100) : '',
                 'route' => isset($data['route']) ? substr((string)$data['route'], 0, 255) : '',
                 'method' => isset($data['method']) ? (string)$data['method'] : '',
                 'status' => isset($data['status']) ? (int)$data['status'] : 0,

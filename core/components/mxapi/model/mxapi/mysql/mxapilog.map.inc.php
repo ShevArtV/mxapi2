@@ -1,7 +1,7 @@
 <?php
 $xpdo_meta_map['mxApiLog'] = array(
     'package' => 'mxapi',
-    'version' => '1.1',
+    'version' => '1.2',
     'table' => 'mxapi_log',
     'extends' => 'xPDOSimpleObject',
     'tableMeta' => array(
@@ -12,6 +12,7 @@ $xpdo_meta_map['mxApiLog'] = array(
         'client_id' => 0,
         'user_id' => 0,
         'endpoint' => '',
+        'context' => '',
         'route' => '',
         'method' => '',
         'status' => 0,
@@ -58,6 +59,13 @@ $xpdo_meta_map['mxApiLog'] = array(
             'null' => false,
             'default' => '',
             'index' => 'index',
+        ),
+        'context' => array(
+            'dbtype' => 'varchar',
+            'precision' => '100',
+            'phptype' => 'string',
+            'null' => false,
+            'default' => '',
         ),
         'route' => array(
             'dbtype' => 'varchar',

@@ -47,6 +47,8 @@ class Bootstrap
         $values = array(
             'enabled' => (bool)$modx->getOption('mxapi.enabled', null, true),
             'route_prefix' => $modx->getOption('mxapi.route_prefix', null, '/mxapi/v1'),
+            'context' => $modx->getOption('mxapi.context', null, 'mgr'),
+            'allow_request_context' => (bool)$modx->getOption('mxapi.allow_request_context', null, false),
             'token_ttl' => (int)$modx->getOption('mxapi.token_ttl', null, 86400),
             'default_limit' => (int)$modx->getOption('mxapi.default_limit', null, 100),
             'max_limit' => (int)$modx->getOption('mxapi.max_limit', null, 1000),

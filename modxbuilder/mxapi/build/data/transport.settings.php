@@ -13,6 +13,13 @@ $definitions = array(
     // Публичный префикс маршрутов. Проектные алиасы (напр. /api/v1/...) задаются
     // в core/config/mxapi.php, а не здесь.
     'mxapi.route_prefix'          => array('value' => '/mxapi/v1',   'xtype' => 'textfield'),
+    // Контекст MODX по умолчанию: в нём проверяются права и выполняются процессоры,
+    // если эндпоинт не объявил свой. Управляющие эндпоинты работают в mgr.
+    'mxapi.context'               => array('value' => 'mgr',          'xtype' => 'textfield'),
+    // Разрешить вызывающей системе выбирать контекст заголовком X-MxApi-Context
+    // (только для эндпоинтов, объявивших modx_context = request). Нужно на
+    // мультисайте; выключено по умолчанию — расширяет поверхность атаки.
+    'mxapi.allow_request_context' => array('value' => '0',            'xtype' => 'combo-boolean'),
     // Время жизни выданного bearer-токена, сек.
     'mxapi.token_ttl'             => array('value' => '86400',        'xtype' => 'numberfield'),
     // Пагинация по умолчанию и жёсткий потолок для limit.

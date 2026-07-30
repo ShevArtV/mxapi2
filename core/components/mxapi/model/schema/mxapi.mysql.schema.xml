@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model package="mxapi" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.1">
+<model package="mxapi" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" version="1.2">
 
     <!--
         Клиент API (machine-to-machine). Секрет хранится только хэшем.
@@ -13,6 +13,13 @@
         <field key="user_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
         <field key="scopes" dbtype="text" phptype="json" null="true"/>
         <field key="allowed_ips" dbtype="text" phptype="string" null="true"/>
+        <!--
+            Контексты MODX, в которых клиенту разрешено работать. Пусто —
+            только контекст по умолчанию (mxapi.context), "*" — любой. Нужно на
+            мультисайте: без списка токен интеграции одного сайта работал бы на
+            всех сразу.
+        -->
+        <field key="contexts" dbtype="text" phptype="json" null="true"/>
         <field key="rate_limit" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0"/>
         <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1" index="index"/>
         <field key="description" dbtype="text" phptype="string" null="true"/>
@@ -78,6 +85,8 @@
         <field key="client_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
         <field key="user_id" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>
         <field key="endpoint" dbtype="varchar" precision="191" phptype="string" null="false" default="" index="index"/>
+        <!-- Контекст MODX, в котором выполнялся вызов: на мультисайте без него аудит бессмыслен. -->
+        <field key="context" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
         <field key="route" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
         <field key="method" dbtype="varchar" precision="10" phptype="string" null="false" default=""/>
         <field key="status" dbtype="integer" precision="11" attributes="unsigned" phptype="integer" null="false" default="0" index="index"/>

@@ -70,6 +70,24 @@ interface PlatformInterface
     public function setRuntimeUser(PlatformUser $user);
 
     /**
+     * @return string Ключ контекста, в котором платформа работает сейчас.
+     */
+    public function getContextKey();
+
+    /**
+     * Переводит платформу в указанный контекст.
+     *
+     * Права процессоров проверяются политикой контекста, поэтому эндпоинт,
+     * объявивший контекст, обязан и проверяться, и выполняться именно в нём.
+     * Реализация отвечает за то, чтобы текущий пользователь запроса остался
+     * текущим после переключения.
+     *
+     * @param string $key
+     * @return bool false — контекст не существует или недоступен.
+     */
+    public function useContext($key);
+
+    /**
      * Проверка права пользователя в namespace mxapi.
      *
      * @param PlatformUser $user

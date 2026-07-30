@@ -144,6 +144,22 @@ MxApi.renderItem = function (endpoint) {
         '</div>';
 };
 
+/**
+ * Контекст, в котором выполняется эндпоинт. Права процессоров принадлежат
+ * политике контекста, поэтому администратору это видеть так же важно, как право.
+ */
+MxApi.contextLabel = function (endpoint) {
+    if (endpoint.modx_context === 'request') {
+        return 'из запроса (<code>X-MxApi-Context</code>)';
+    }
+
+    if (endpoint.modx_context) {
+        return '<code>' + MxApi.escape(endpoint.modx_context) + '</code>';
+    }
+
+    return '<span class="mxapi-muted">по умолчанию (mxapi.context)</span>';
+};
+
 MxApi.renderDetails = function (endpoint) {
     var rows = [
         ['Идентификатор', '<code>' + MxApi.escape(endpoint.id) + '</code>'],
@@ -151,6 +167,7 @@ MxApi.renderDetails = function (endpoint) {
         ['Scope', endpoint.scope ? '<code>' + MxApi.escape(endpoint.scope) + '</code>' : '<span class="mxapi-muted">не требуется</span>'],
         ['Право MODX', endpoint.permission ? '<code>' + MxApi.escape(endpoint.permission) + '</code>' : '<span class="mxapi-muted">не требуется</span>'],
         ['Аутентификация', endpoint.auth === 'none' ? '<span class="mxapi-muted">не требуется</span>' : 'Bearer-токен'],
+        ['Контекст MODX', MxApi.contextLabel(endpoint)],
         ['Источник', MxApi.escape(endpoint.provider)]
     ];
 

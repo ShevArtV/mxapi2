@@ -145,6 +145,18 @@ class OpenApiGenerator
             }
         }
 
+        // Контекст из запроса — часть контракта такого эндпоинта, поэтому он
+        // обязан быть виден в спецификации, а не только в описании.
+        if ($metadata->takesContextFromRequest()) {
+            $parameters[] = array(
+                'name' => 'X-MxApi-Context',
+                'in' => 'header',
+                'required' => false,
+                'description' => 'Контекст MODX, в котором выполнять запрос. По умолчанию — mxapi.context.',
+                'schema' => array('type' => 'string'),
+            );
+        }
+
         if (!empty($parameters)) {
             $operation['parameters'] = $parameters;
         }
@@ -183,6 +195,12 @@ class OpenApiGenerator
         }
         if ($metadata->isWrite()) {
             $notes[] = 'Изменяющий запрос: поддерживает заголовок `Idempotency-Key`.';
+        }
+        if ($metadata->takesContextFromRequest()) {
+            $notes[] = 'Контекст MODX задаётся заголовком `X-MxApi-Context`'
+                . ' (по умолчанию — `mxapi.context`; должен быть разрешён клиенту).';
+        } elseif ($metadata->getModxContext() !== '') {
+            $notes[] = 'Контекст MODX: `' . $metadata->getModxContext() . '`.';
         }
 
         return trim($description . (empty($notes) ? '' : "\n\n" . implode(' ', $notes)));

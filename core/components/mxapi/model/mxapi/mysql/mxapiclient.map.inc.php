@@ -1,7 +1,7 @@
 <?php
 $xpdo_meta_map['mxApiClient'] = array(
     'package' => 'mxapi',
-    'version' => '1.1',
+    'version' => '1.2',
     'table' => 'mxapi_client',
     'extends' => 'xPDOSimpleObject',
     'tableMeta' => array(
@@ -14,6 +14,7 @@ $xpdo_meta_map['mxApiClient'] = array(
         'user_id' => 0,
         'scopes' => null,
         'allowed_ips' => null,
+        'contexts' => null,
         'rate_limit' => 0,
         'active' => 1,
         'description' => null,
@@ -60,6 +61,11 @@ $xpdo_meta_map['mxApiClient'] = array(
         'allowed_ips' => array(
             'dbtype' => 'text',
             'phptype' => 'string',
+            'null' => true,
+        ),
+        'contexts' => array(
+            'dbtype' => 'text',
+            'phptype' => 'json',
             'null' => true,
         ),
         'rate_limit' => array(

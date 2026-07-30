@@ -17,6 +17,15 @@ return array(
     // Время жизни токена, сек.
     'token_ttl' => 86400,
 
+    // Контекст MODX по умолчанию: в нём проверяются права и выполняются
+    // процессоры, если эндпоинт не объявил свой (modx_context в метаданных).
+    'context' => 'mgr',
+
+    // Разрешить вызывающей системе выбирать контекст заголовком X-MxApi-Context
+    // (только для эндпоинтов с modx_context = request). Включать осознанно:
+    // на мультисайте контекст обязан быть в поле contexts клиента.
+    'allow_request_context' => false,
+
     // Провайдеры эндпоинтов: классы, реализующие MxApi\Core\Provider\ProviderInterface.
     'providers' => array(
         // 'MsOrderBridge\\MxApi\\OrdersProvider',

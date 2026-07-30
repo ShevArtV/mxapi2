@@ -20,6 +20,12 @@ class EndpointMetadata
     const AUTH_BEARER = 'bearer';
 
     /**
+     * Контекст MODX берётся из запроса (заголовок X-MxApi-Context или параметр
+     * context), а не задан жёстко: так один эндпоинт обслуживает мультисайт.
+     */
+    const MODX_CONTEXT_FROM_REQUEST = 'request';
+
+    /**
      * Ключи реализации: полезны в админке («чем сделан эндпоинт»), но наружу не
      * отдаются — публичному клиенту незачем знать имена процессоров и маппинг
      * полей, а в OpenAPI им тем более не место.
@@ -49,6 +55,10 @@ class EndpointMetadata
             'permission' => '',
             'provider' => 'mxapi.core',
             'context' => self::CONTEXT_PUBLIC,
+            // Контекст MODX, в котором обязан выполняться эндпоинт: конкретный
+            // ключ ('mgr', 'web', 'shop'), MODX_CONTEXT_FROM_REQUEST или пустая
+            // строка — «безразличен, выполняется в текущем».
+            'modx_context' => '',
             'auth' => self::AUTH_BEARER,
             'write' => false,
             'deprecated' => false,
@@ -137,6 +147,28 @@ class EndpointMetadata
     public function getContext()
     {
         return $this->spec['context'];
+    }
+
+    /**
+     * Контекст MODX, требуемый эндпоинтом.
+     *
+     * Часть публичного контракта, а не деталь реализации: права процессоров
+     * проверяются политикой контекста, поэтому интегратор обязан видеть, в каком
+     * контексте работает эндпоинт.
+     *
+     * @return string Ключ контекста, MODX_CONTEXT_FROM_REQUEST или '' (безразличен).
+     */
+    public function getModxContext()
+    {
+        return (string)$this->spec['modx_context'];
+    }
+
+    /**
+     * @return bool Контекст задаётся вызывающей системой в запросе.
+     */
+    public function takesContextFromRequest()
+    {
+        return $this->getModxContext() === self::MODX_CONTEXT_FROM_REQUEST;
     }
 
     /**

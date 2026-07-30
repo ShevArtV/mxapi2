@@ -151,11 +151,16 @@ class Kernel
             $request = $request->withPathParams($match->getPathParams());
 
             if ($metadata->requiresAuth()) {
-                $auth = $this->tokenService->authenticate(
-                    $request,
-                    $metadata->getPermission(),
-                    $metadata->getScope()
-                );
+                // Право эндпоинта здесь НЕ проверяем: политика прав принадлежит
+                // контексту MODX, поэтому проверка обязана идти после
+                // переключения — иначе проверка и исполнение разъезжаются.
+                $auth = $this->tokenService->authenticate($request, '', $metadata->getScope());
+            }
+
+            $this->applyContext($request, $metadata, $auth);
+
+            if ($auth && $metadata->getPermission() !== '') {
+                $this->tokenService->assertPermission($auth->getUser(), $metadata->getPermission());
             }
 
             $this->platform->invokeEvent('mxApiOnBeforeEndpointRun', array(
@@ -195,6 +200,71 @@ class Kernel
 
             return $this->decorate(Response::fromException($error), $request);
         }
+    }
+
+    /**
+     * Переводит платформу в контекст, требуемый эндпоинтом.
+     *
+     * @param Request $request
+     * @param EndpointMetadata $metadata
+     * @param AuthContext|null $auth
+     * @return void
+     * @throws ApiException
+     */
+    private function applyContext(Request $request, EndpointMetadata $metadata, AuthContext $auth = null)
+    {
+        $target = $this->resolveContextKey($request, $metadata);
+        if ($target === '') {
+            return;
+        }
+
+        // Ограничение по клиенту: токен, выданный интеграции одного сайта, не
+        // должен работать на другом. Токены по логину/паролю ограничены правами
+        // самого пользователя в этом контексте, отдельного списка им не нужно.
+        $client = $auth ? $auth->getClient() : null;
+        if ($client && !$client->allowsContext($target, (string)$this->config->get('context'))) {
+            throw ApiException::contextNotAllowed($target);
+        }
+
+        if ($this->platform->getContextKey() === $target) {
+            return;
+        }
+
+        if (!$this->platform->useContext($target)) {
+            throw ApiException::unknownContext($target);
+        }
+    }
+
+    /**
+     * Какой контекст нужен этому запросу.
+     *
+     * @param Request $request
+     * @param EndpointMetadata $metadata
+     * @return string Пустая строка — переключать не нужно.
+     * @throws ApiException
+     */
+    private function resolveContextKey(Request $request, EndpointMetadata $metadata)
+    {
+        if (!$metadata->takesContextFromRequest()) {
+            // Либо жёстко объявленный контекст, либо '' — эндпоинту безразлично,
+            // и тогда он выполняется в контексте точки входа.
+            return $metadata->getModxContext();
+        }
+
+        $requested = trim($request->getHeader('x-mxapi-context'));
+        if ($requested === '') {
+            $requested = trim((string)$request->getParam('context', ''));
+        }
+
+        if ($requested === '') {
+            return trim((string)$this->config->get('context'));
+        }
+
+        if (!$this->config->getBool('allow_request_context')) {
+            throw ApiException::contextNotAllowed($requested);
+        }
+
+        return $requested;
     }
 
     /**
@@ -435,6 +505,9 @@ class Kernel
             'client_id' => $auth ? $auth->getClientId() : 0,
             'user_id' => $auth ? $auth->getUser()->getId() : 0,
             'endpoint' => $metadata ? $metadata->getId() : '',
+            // Контекст обязателен в аудите: на мультисайте «кто менял заказ» без
+            // указания сайта бессмысленно.
+            'context' => $this->platform->getContextKey(),
             'route' => $request->getPath(),
             'method' => $request->getMethod(),
             'status' => (int)$status,

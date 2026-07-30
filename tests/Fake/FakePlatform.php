@@ -28,8 +28,17 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     /** @var array username => password */
     public $passwords = array();
 
-    /** @var array Права: "userId|permission" => true */
+    /** @var array Права: "userId|permission" => true; "userId|permission@context" — право только в этом контексте */
     public $permissions = array();
+
+    /** @var string Контекст, в котором работает платформа. */
+    public $contextKey = 'mgr';
+
+    /** @var array Контексты, которые платформа «знает»; остальные считаются несуществующими. */
+    public $knownContexts = array('mgr', 'web');
+
+    /** @var array Журнал проверок прав: [['permission' => ..., 'context' => ...]] */
+    public $permissionChecks = array();
 
     /** @var array */
     public $tokens = array();
@@ -115,13 +124,39 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
         $this->runtimeUser = $user;
     }
 
+    public function getContextKey()
+    {
+        return $this->contextKey;
+    }
+
+    public function useContext($key)
+    {
+        if (!in_array($key, $this->knownContexts, true)) {
+            return false;
+        }
+
+        $this->contextKey = $key;
+
+        return true;
+    }
+
     public function checkPermission(PlatformUser $user, $permission)
     {
+        // Контекст фиксируется вместе с правом: тесты проверяют, что право
+        // спрашивают уже после переключения контекста.
+        $this->permissionChecks[] = array('permission' => $permission, 'context' => $this->contextKey);
+
         if ($user->isSudo()) {
             return true;
         }
 
-        return !empty($this->permissions[$user->getId() . '|' . $permission]);
+        $key = $user->getId() . '|' . $permission;
+        $scoped = $key . '@' . $this->contextKey;
+        if (array_key_exists($scoped, $this->permissions)) {
+            return (bool)$this->permissions[$scoped];
+        }
+
+        return !empty($this->permissions[$key]);
     }
 
     public function runProcessor($processor, array $properties = array(), array $options = array())
