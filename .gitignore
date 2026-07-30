@@ -8,9 +8,10 @@
 # Собранные transport-пакеты (артефакты сборки)
 /core/packages/
 
-# Composer: vendor собирается при сборке пакета (composer install --no-dev)
+# Composer: vendor собирается при сборке пакета (composer install --no-dev),
+# composer.lock коммитится — сборка на стенде должна быть воспроизводимой
 /core/components/mxapi/vendor/
-/core/components/mxapi/composer.lock
+/core/components/mxapi/.phpunit.result.cache
 
 # Проектная конфигурация конкретного сайта — не наша
 /core/config/mxapi.php
