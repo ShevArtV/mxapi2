@@ -11,6 +11,12 @@ MODX 3-линейка живёт отдельно: [`apps/mxapi3`](../mxapi3). �
 
 План развития — [`ROADMAP.md`](ROADMAP.md).
 
+Документация для пользователей пакета — `core/components/mxapi/docs/readme.txt` (едет
+в transport) и публичная дока https://docs.modx.pro/components/mxapi (в ней же —
+раздел про свои эндпоинты, бывший `docs/providers.md`). Markdown внутри компонента
+не держим: в transport его никто не читает, а копия текста расходится с оригиналом
+молча.
+
 ## Структура
 
 ```
@@ -104,6 +110,20 @@ location ^~ /mxapi/ {
     try_files $uri /assets/components/mxapi/index.php$is_args$args;
 }
 ```
+
+Apache — в корневом `.htaccess` **выше** правил MODX, иначе запрос перехватит сам
+MODX:
+
+```apache
+RewriteEngine On
+RewriteRule ^mxapi/ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteRule ^mxapi/(.*)$ assets/components/mxapi/index.php [QSA,L]
+```
+
+Первое правило нужно потому, что при mod_php и CGI Apache не передаёт заголовок
+`Authorization` — bearer-токен теряется, и API отвечает `token_required` на верный
+токен. `Request::collectHeaders()` подхватывает его из `REDIRECT_HTTP_AUTHORIZATION`;
+альтернатива — `CGIPassAuth On` (Apache 2.4.13+).
 
 Без правки конфигурации веб-сервера тот же API доступен как
 `/assets/components/mxapi/index.php?route=/auth/token` — удобно для проверки
