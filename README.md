@@ -15,15 +15,47 @@ MODX 3-линейка живёт отдельно: [`apps/mxapi3`](../mxapi3). �
 
 ```
 assets/components/mxapi/        публичная точка входа (index.php) и ассеты CMP
-core/components/mxapi/
+core/components/mxapi/          ← этот каталог целиком уезжает в transport
     composer.json               PSR-4 MxApi\ → src/, зависимость nikic/fast-route
+    vendor/                     рантайм-зависимости; коммитятся и едут в пакет
     src/Core/                   платформо-независимое ядро (общее с mxapi3)
     src/Platform/Modx2/         всё, что знает про modX 2 и xPDO
     src/Endpoint/               встроенные эндпоинты (auth, meta)
     model/schema/               xPDO-схема: клиенты, токены, журнал
     controllers/, processors/   CMP
 modxbuilder/mxapi/build/        сборка transport-пакета
+composer.json, phpunit.xml      инструменты разработки — в пакет НЕ едут
+tests/                          тесты ядра — в пакет НЕ едут
 ```
+
+⚠️ Билдер копирует `core/components/mxapi/` **целиком**, механизма исключений у
+него нет. Поэтому phpunit и тесты вынесены в корень репозитория: всё, что лежит
+внутри каталога компонента, уедет клиентам вместе с пакетом.
+
+## Зависимости
+
+Две независимые установки composer:
+
+```bash
+# Рантайм пакета: только nikic/fast-route, коммитится, едет в transport
+cd core/components/mxapi && composer install --no-dev
+
+# Инструменты разработки: phpunit, не коммитится, в пакет не едет
+composer install    # в корне репозитория
+```
+
+Пакетный `vendor/` **обязан** быть в репозитории и в transport: точка входа
+подключает его в бутстрапе, и без него API отвечает `not_installed`.
+Ставить его только с `--no-dev` — иначе в пакет уедет phpunit.
+
+## Тесты
+
+```bash
+vendor/bin/phpunit    # в корне репозитория
+```
+
+Тесты гоняют ядро на `FakePlatform`, без поднятия MODX. Если для теста ядра
+понадобился живой MODX — значит граница платформенного адаптера протекла.
 
 ## Сборка
 
@@ -31,7 +63,7 @@ MODX 2-пакет собирается **на стенде** (билдер ин�
 Стенд — Hostland, корень `art-sites.ru/htdocs/mspaypalalt/`.
 
 ```bash
-# 1. Зависимости composer (без dev — в пакет едет только рантайм)
+# 1. Рантайм-зависимости без dev
 cd core/components/mxapi && composer install --no-dev
 
 # 2. Файлы на стенд (rsync -R, одно SSH-подключение на серию команд)

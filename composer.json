@@ -1,0 +1,22 @@
+{
+  "name": "shevartv/mxapi2-dev",
+  "description": "Инструменты разработки mxApi: тесты ядра без поднятия MODX",
+  "type": "project",
+  "license": "GPL-2.0-or-later",
+  "require-dev": {
+    "phpunit/phpunit": "^8.5"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MxApi\\Tests\\": "tests/"
+    },
+    "files": [
+      "core/components/mxapi/vendor/autoload.php"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

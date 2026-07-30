@@ -8,10 +8,12 @@
 # Собранные transport-пакеты (артефакты сборки)
 /core/packages/
 
-# Composer: vendor собирается при сборке пакета (composer install --no-dev),
-# composer.lock коммитится — сборка на стенде должна быть воспроизводимой
-/core/components/mxapi/vendor/
-/core/components/mxapi/.phpunit.result.cache
+# Инструменты разработки в корне репозитория: в пакет не едут.
+# ⚠️ core/components/mxapi/vendor/ НЕ игнорируется: рантайм-зависимости
+# (nikic/fast-route) обязаны ехать в transport вместе с пакетом.
+/vendor/
+/composer.lock
+/.phpunit.result.cache
 
 # Проектная конфигурация конкретного сайта — не наша
 /core/config/mxapi.php

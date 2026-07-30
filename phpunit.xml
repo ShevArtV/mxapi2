@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Тесты живут в корне репозитория, а не внутри core/components/mxapi/:
+    билдер копирует каталог компонента в transport целиком, и всё, что лежит
+    внутри, уехало бы клиентам вместе с пакетом.
+-->
 <phpunit bootstrap="vendor/autoload.php"
          colors="true"
          convertErrorsToExceptions="true"
