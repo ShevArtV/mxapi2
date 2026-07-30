@@ -44,7 +44,10 @@ class ClientSecretTest extends TestCase
     {
         $secret = ClientSecret::generateSecret();
 
-        $this->assertRegExp('/^[A-Za-z0-9_-]+$/', $secret);
+        // preg_match вместо assert*RegularExpression: имя ассерта разное в
+        // PHPUnit 8 (линия MODX 2) и 9 (линия MODX 3), а файл теста в обеих
+        // линиях обязан оставаться дословно одинаковым.
+        $this->assertSame(1, preg_match('/^[A-Za-z0-9_-]+$/', $secret));
         $this->assertGreaterThanOrEqual(32, strlen($secret));
     }
 
