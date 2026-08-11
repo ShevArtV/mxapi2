@@ -52,7 +52,27 @@ class KernelTest extends TestCase
             new EndpointsEndpoint($this->kernel->getRegistry()),
             new DemoEndpoint(),
             new InternalEndpoint(),
+            new BrokenEndpoint(),
         ]);
+    }
+
+    /**
+     * Ошибка типов — это \Error, а не \Exception. Пока ядро ловило только
+     * \Exception, такая ошибка вылетала мимо всех catch, и клиент получал голый
+     * 500 от веб-сервера вместо JSON (инцидент 11.08.2026: платформа звала
+     * mxLogger с перепутанными аргументами прямо на пути запроса).
+     */
+    public function testEndpointErrorIsAnsweredWithJsonInsteadOfBreakingResponse()
+    {
+        $token = $this->issueToken('demo.read');
+
+        $response = $this->kernel->handle(
+            $this->request('GET', '/demo/broken', [], [], ['authorization' => 'Bearer ' . $token])
+        );
+
+        $this->assertSame(500, $response->getStatus());
+        $this->assertSame('internal_error', $this->errorCode($response));
+        $this->assertNotEmpty($this->platform->logs, 'Причина обязана уйти в лог.');
     }
 
     public function testUnknownRouteReturns404()
@@ -430,6 +450,28 @@ class DemoEndpoint extends AbstractEndpoint
             'limit' => isset($params['limit']) ? $params['limit'] : null,
             'id' => isset($pathParams['id']) ? $pathParams['id'] : null,
         ]);
+    }
+}
+
+/**
+ * Эндпоинт, падающий ошибкой типов, — так ломается чужой код на пути запроса.
+ */
+class BrokenEndpoint extends AbstractEndpoint
+{
+    protected function describe()
+    {
+        return [
+            'id' => 'demo.broken',
+            'path' => '/demo/broken',
+            'methods' => ['GET'],
+            'scope' => 'demo.read',
+            'permission' => 'mxapi_demo_read',
+        ];
+    }
+
+    public function handle(Request $request, EndpointContext $context)
+    {
+        throw new \TypeError('Argument 4 passed to mxLogger::log() must be of the type array, string given');
     }
 }
 

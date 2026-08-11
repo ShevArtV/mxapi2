@@ -191,9 +191,12 @@ class Kernel
             $this->logCall($request, $metadata, $auth, $exception->getStatus(), $exception->getErrorCode(), $startedAt, $contextKey);
 
             return $this->decorate(Response::fromException($exception), $request);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             // Внутренние подробности наружу не отдаём: они уходят в лог, клиент
             // получает нейтральный internal_error (кроме режима отладки).
+            // Именно \Throwable: ошибка типов в эндпоинте, процессоре MODX или
+            // стороннем провайдере — это \Error, и без него клиент вместо JSON
+            // получает голый 500 от веб-сервера.
             $this->platform->log('error', 'Необработанное исключение: ' . $exception->getMessage(), [
                 'endpoint' => $metadata ? $metadata->getId() : '',
                 'file' => $exception->getFile() . ':' . $exception->getLine(),
@@ -437,9 +440,10 @@ class Kernel
 
         try {
             $this->registry->addMany($provider->getEndpoints($this->platform, $this->config));
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             // Сломанный сторонний провайдер не должен ронять весь API:
-            // остальные эндпоинты обязаны продолжать работать.
+            // остальные эндпоинты обязаны продолжать работать. Чаще всего он
+            // ломается именно ошибкой типов (\Error), поэтому \Exception мало.
             $this->platform->log('error', 'Провайдер ' . $provider->getId() . ' не отдал эндпоинты: ' . $exception->getMessage());
         }
     }

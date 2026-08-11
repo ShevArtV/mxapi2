@@ -81,15 +81,30 @@ class Modx2Platform implements PlatformInterface
      */
     public function log($level, $message, array $context = [])
     {
-        $message = '[mxapi] ' . $message;
-        if (!empty($context)) {
-            $message .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $logger = $this->findLogger();
+        if ($logger) {
+            try {
+                // Порядок аргументов mxLogger: тэги, уровень, сообщение, контекст.
+                // Сообщение уходит чистым: тэг и контекст у логгера — отдельные
+                // поля грида, и дублировать их в тексте значит ломать фильтрацию,
+                // ради которой логгер и подключён.
+                $logger->log('mxapi', $level, $message, $context);
+
+                return;
+            } catch (\Throwable $exception) {
+                // Ошибка типов — это \Error, а не \Exception, поэтому ловим
+                // \Throwable: сигнатура соседнего пакета не наш контракт, он
+                // может стоять любой версии. Сбой логгера уходит в штатный
+                // журнал MODX и не рушит ответ клиенту.
+                $message .= ' (mxLogger не принял запись: ' . $exception->getMessage() . ')';
+            }
         }
 
-        if (isset($this->modx->mxlogger) && is_object($this->modx->mxlogger) && method_exists($this->modx->mxlogger, 'log')) {
-            $this->modx->mxlogger->log($message, $context, $level, 'mxapi');
-
-            return;
+        // Префикс и контекст строкой — только здесь: у журнала MODX полей для
+        // тэга и структурированного контекста нет.
+        $fallback = '[mxapi] ' . $message;
+        if (!empty($context)) {
+            $fallback .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         $levels = [
@@ -100,7 +115,29 @@ class Modx2Platform implements PlatformInterface
         ];
         $modxLevel = isset($levels[$level]) ? $levels[$level] : \modX::LOG_LEVEL_ERROR;
 
-        $this->modx->log($modxLevel, $message);
+        $this->modx->log($modxLevel, $fallback);
+    }
+
+    /**
+     * Ищет установленный mxLogger, не создавая его сам.
+     *
+     * Свойств два, потому что их два и у логгера: фасад mxLogger 1.2+ вешает
+     * сервис на $modx->mxl, а getService() — на $modx->mxlogger. Проверять надо
+     * оба: плагин фасада может быть выключен, а вызов getService() до нас —
+     * не гарантирован.
+     *
+     * @return object|null
+     */
+    private function findLogger()
+    {
+        foreach (['mxl', 'mxlogger'] as $property) {
+            $service = isset($this->modx->{$property}) ? $this->modx->{$property} : null;
+            if (is_object($service) && method_exists($service, 'log')) {
+                return $service;
+            }
+        }
+
+        return null;
     }
 
     /**

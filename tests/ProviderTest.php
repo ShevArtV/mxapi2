@@ -60,6 +60,18 @@ class ProviderTest extends TestCase
         $this->assertNotNull($kernel->getRegistry()->get('auth.token'), 'Встроенные эндпоинты должны остаться');
     }
 
+    /**
+     * Ошибка типов — это \Error, а не \Exception: catch (\Exception) её мимо
+     * себя пропустит и уронит весь API из-за одного чужого провайдера.
+     */
+    public function testProviderFatalErrorDoesNotBreakOtherEndpoints()
+    {
+        $kernel = $this->boot(['providers' => [FatalProvider::class, DemoProvider::class]]);
+
+        $this->assertNotNull($kernel->getRegistry()->get('demo.orders.list'), 'Рабочий провайдер должен зарегистрироваться');
+        $this->assertNotNull($kernel->getRegistry()->get('auth.token'), 'Встроенные эндпоинты должны остаться');
+    }
+
     public function testUnknownProviderClassIsLogged()
     {
         $kernel = $this->boot(['providers' => ['No\\Such\\Provider']]);
@@ -217,6 +229,30 @@ class BrokenProvider implements ProviderInterface
     public function getEndpoints(PlatformInterface $platform, Config $config)
     {
         throw new \RuntimeException('Провайдер сломан');
+    }
+}
+
+/**
+ * Сторонний провайдер, падающий ошибкой типов, а не исключением.
+ *
+ * 11.08.2026 такая ошибка прошла мимо catch (\Exception) и отдала 500 на всех
+ * маршрутах сразу — теперь ловится \Throwable.
+ */
+class FatalProvider implements ProviderInterface
+{
+    public function getId()
+    {
+        return 'fatal';
+    }
+
+    public function isAvailable(PlatformInterface $platform)
+    {
+        return true;
+    }
+
+    public function getEndpoints(PlatformInterface $platform, Config $config)
+    {
+        throw new \Error('Call to a member function getSomething() on null');
     }
 }
 

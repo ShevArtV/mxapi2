@@ -60,8 +60,10 @@ class MaintenanceService
                     'log_entries' => $logs,
                 ]);
             }
-        } catch (\Exception $exception) {
-            // Уборка не должна влиять на ответ клиенту.
+        } catch (\Throwable $exception) {
+            // Уборка не должна влиять на ответ клиенту — ни при каких условиях,
+            // включая ошибки типов: они в PHP 7+ приходят как \Error, и одного
+            // \Exception здесь мало (инцидент 2026-08-11 — 500 на всех маршрутах).
             $this->platform->log('error', 'Уборка не выполнена: ' . $exception->getMessage());
         }
 

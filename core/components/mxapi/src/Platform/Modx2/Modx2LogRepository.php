@@ -47,7 +47,9 @@ class Modx2LogRepository implements LogRepositoryInterface
             ], '', true, true);
 
             return (bool)$entry->save();
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
+            // Аудит пишется по ходу ответа клиенту, поэтому его сбой — включая
+            // ошибки типов из xPDO (\Error) — ответ ронять не должен.
             $this->modx->log(\modX::LOG_LEVEL_ERROR, '[mxapi] Не удалось записать журнал: ' . $exception->getMessage());
 
             return false;
