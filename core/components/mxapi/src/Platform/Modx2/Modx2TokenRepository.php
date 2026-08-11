@@ -95,12 +95,14 @@ class Modx2TokenRepository implements TokenRepositoryInterface
      */
     public function purgeExpired($before)
     {
-        $query = $this->modx->newQuery('mxApiToken');
-        $query->where(['expireson:<' => (int)$before, 'expireson:!=' => 0]);
+        // Условия — массивом, а не объектом запроса: removeCollection() строит
+        // запрос сам и кладёт второй аргумент внутрь where() как значение, а
+        // xPDOQuery в строку не приводится — на удалении был fatal.
+        $conditions = ['expireson:<' => (int)$before, 'expireson:!=' => 0];
 
-        $count = $this->modx->getCount('mxApiToken', $query);
+        $count = $this->modx->getCount('mxApiToken', $conditions);
         if ($count > 0) {
-            $this->modx->removeCollection('mxApiToken', $query);
+            $this->modx->removeCollection('mxApiToken', $conditions);
         }
 
         return $count;

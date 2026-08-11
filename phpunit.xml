@@ -4,7 +4,7 @@
     билдер копирует каталог компонента в transport целиком, и всё, что лежит
     внутри, уехало бы клиентам вместе с пакетом.
 -->
-<phpunit bootstrap="vendor/autoload.php"
+<phpunit bootstrap="tests/bootstrap.php"
          colors="true"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
