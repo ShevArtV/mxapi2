@@ -4,6 +4,8 @@ namespace MxApi\Core\Log;
 
 /**
  * Журнал вызовов API.
+ *
+ * @internal Реализуется адаптером платформы, не провайдером.
  */
 interface LogRepositoryInterface
 {

@@ -6,6 +6,8 @@ use MxApi\Core\Endpoint\EndpointInterface;
 
 /**
  * Результат сопоставления: найденный эндпоинт и параметры из пути.
+ *
+ * @internal
  */
 class RouteMatch
 {

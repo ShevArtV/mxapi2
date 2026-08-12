@@ -14,6 +14,8 @@ use MxApi\Core\Registry\EndpointRegistry;
  *
  * Роутинг на nikic/fast-route — той же библиотеке, что использует miniShop3,
  * поэтому mxapi2 и mxapi3 разбирают маршруты одинаково.
+ *
+ * @internal
  */
 class Router
 {

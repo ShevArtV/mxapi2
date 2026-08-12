@@ -7,7 +7,9 @@ use MxApi\Core\Auth\TokenService;
 use MxApi\Core\Endpoint\EndpointContext;
 use MxApi\Core\Endpoint\EndpointInterface;
 use MxApi\Core\Endpoint\EndpointMetadata;
+use MxApi\Core\Endpoint\EtagAwareInterface;
 use MxApi\Core\Http\ApiException;
+use MxApi\Core\Http\ETag;
 use MxApi\Core\Http\Request;
 use MxApi\Core\Http\Response;
 use MxApi\Core\Maintenance\MaintenanceService;
@@ -22,6 +24,8 @@ use MxApi\Core\Routing\Router;
 /**
  * Обработка запроса: сборка реестра, роутинг, аутентификация, вызов эндпоинта,
  * журналирование. Единственный класс, знающий полный порядок этих шагов.
+ *
+ * @internal Собирается точкой входа пакета; провайдеру не нужен.
  */
 class Kernel
 {
@@ -97,17 +101,8 @@ class Kernel
         $this->addMiddleware(new RateLimitMiddleware());
         $this->addMiddleware(new IdempotencyMiddleware());
 
-        foreach ($this->config->getList('middleware') as $class) {
-            if (!class_exists($class)) {
-                $this->platform->log('warning', 'Промежуточный обработчик не найден: ' . $class);
-                continue;
-            }
-            $instance = new $class();
-            if ($instance instanceof MiddlewareInterface) {
-                $this->addMiddleware($instance);
-            } else {
-                $this->platform->log('warning', 'Класс не реализует MiddlewareInterface: ' . $class);
-            }
+        foreach ($this->collectMiddleware() as $item) {
+            $this->useMiddleware($item);
         }
 
         foreach ($this->collectProviderClasses() as $class) {
@@ -291,7 +286,10 @@ class Kernel
     private function runPipeline(Request $request, EndpointContext $context, EndpointInterface $endpoint)
     {
         $next = function (Request $request) use ($endpoint, $context) {
-            return $endpoint->handle($request, $context);
+            // Валидация версии считается здесь, а не до цепочки: иначе повторный
+            // запрос с If-None-Match проходил бы мимо лимита частоты, и
+            // заголовком можно было бы дёшево обойти ограничение.
+            return $this->runValidated($request, $endpoint, $context);
         };
 
         // Собираем с конца: первый в списке обработчик выполняется первым.
@@ -303,6 +301,115 @@ class Kernel
         }
 
         return $next($request);
+    }
+
+    /**
+     * Вызов эндпоинта с проверкой версии ответа.
+     *
+     * Обе ветки — объявленная эндпоинтом версия и метка от готового тела —
+     * живут здесь вместе намеренно: метка, которую клиент получил, и метка, с
+     * которой сверяется его If-None-Match, обязаны считаться одинаково, иначе
+     * 304 не наступит никогда.
+     *
+     * @param Request $request
+     * @param EndpointInterface $endpoint
+     * @param EndpointContext $context
+     * @return Response
+     */
+    private function runValidated(Request $request, EndpointInterface $endpoint, EndpointContext $context)
+    {
+        $metadata = $endpoint->getMetadata();
+        if (!$this->validatesByEtag($request, $metadata)) {
+            return $endpoint->handle($request, $context);
+        }
+
+        $ifNoneMatch = $request->getHeader('if-none-match');
+
+        // Версия, названная эндпоинтом до сборки тела: экономит не трафик, а
+        // работу — выгрузка, в которой ничего не изменилось, не доходит до
+        // handle() вовсе.
+        $declared = $this->declaredEtag($request, $endpoint, $context);
+        if ($declared !== '') {
+            if (ETag::matches($ifNoneMatch, $declared)) {
+                return Response::notModified($declared);
+            }
+
+            return $this->withEtag($endpoint->handle($request, $context), $declared);
+        }
+
+        $response = $endpoint->handle($request, $context);
+        if ($response->getStatus() !== 200) {
+            return $response;
+        }
+
+        // Потоковый ответ не собран в памяти: считать метку не от чего, а
+        // прогонять выгрузку дважды ради неё — дороже самой пересылки.
+        if ($response->isStream() || !is_array($response->getPayload())) {
+            return $response;
+        }
+
+        $etag = ETag::fromPayload($response->getPayload());
+        if (ETag::matches($ifNoneMatch, $etag)) {
+            return Response::notModified($etag);
+        }
+
+        return $this->withEtag($response, $etag);
+    }
+
+    /**
+     * @param Request $request
+     * @param EndpointInterface $endpoint
+     * @param EndpointContext $context
+     * @return string Пустая строка — эндпоинт версию не называет.
+     */
+    private function declaredEtag(Request $request, EndpointInterface $endpoint, EndpointContext $context)
+    {
+        if (!$endpoint instanceof EtagAwareInterface) {
+            return '';
+        }
+
+        try {
+            $etag = $endpoint->computeEtag($request, $context);
+        } catch (\Throwable $exception) {
+            // Подсчёт версии — оптимизация: сломался, значит собираем ответ
+            // обычным путём, а не отдаём клиенту ошибку.
+            $this->platform->log(
+                'warning',
+                'Эндпоинт ' . $endpoint->getMetadata()->getId() . ' не посчитал ETag: ' . $exception->getMessage()
+            );
+
+            return '';
+        }
+
+        return ETag::format((string)$etag);
+    }
+
+    /**
+     * @param Response $response
+     * @param string $etag
+     * @return Response
+     */
+    private function withEtag(Response $response, $etag)
+    {
+        if ($response->getStatus() !== 200) {
+            return $response;
+        }
+
+        return $response
+            ->withHeader('ETag', $etag)
+            ->withHeader('Cache-Control', 'private, no-cache');
+    }
+
+    /**
+     * @param Request $request
+     * @param EndpointMetadata $metadata
+     * @return bool
+     */
+    private function validatesByEtag(Request $request, EndpointMetadata $metadata)
+    {
+        // Только чтение: метка версии на изменяющем запросе бессмысленна, а
+        // 304 в ответ на POST клиент разберёт как «операция выполнена».
+        return $metadata->isValidatable() && $request->getMethod() === 'GET';
     }
 
     /**
@@ -375,6 +482,80 @@ class Kernel
         ]);
 
         return $response;
+    }
+
+    /**
+     * Промежуточные обработчики от пакетов и от сайта, в порядке выполнения.
+     *
+     * Сначала пакеты, потом конфигурация сайта: пакет привозит свой обработчик
+     * сам, а владелец сайта должен иметь возможность встать после него —
+     * последним рубежом перед эндпоинтом.
+     *
+     * @return array Имена классов и готовые объекты обработчиков.
+     */
+    private function collectMiddleware()
+    {
+        $items = [];
+
+        // Событие — единственный способ для пакета привезти свой обработчик
+        // вместе с собой: иначе его пришлось бы дописывать в core/config/mxapi.php
+        // на каждом сайте руками. Обработчик возвращает имя класса, готовый
+        // объект или список того и другого — как и при регистрации провайдеров.
+        $results = $this->platform->invokeEvent('mxApiOnRegisterMiddleware', []);
+        foreach ($results as $result) {
+            foreach (is_array($result) ? $result : [$result] as $item) {
+                $items[] = $item;
+            }
+        }
+
+        foreach ($this->config->getList('middleware') as $class) {
+            $items[] = $class;
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param mixed $item Имя класса или объект MiddlewareInterface.
+     * @return void
+     */
+    private function useMiddleware($item)
+    {
+        if ($item instanceof MiddlewareInterface) {
+            $this->addMiddleware($item);
+
+            return;
+        }
+
+        $class = is_string($item) ? trim($item) : '';
+        if ($class === '') {
+            return;
+        }
+
+        if (!class_exists($class)) {
+            $this->platform->log('warning', 'Промежуточный обработчик не найден: ' . $class);
+
+            return;
+        }
+
+        try {
+            $instance = new $class();
+        } catch (\Throwable $exception) {
+            // Сломанный обработчик стороннего пакета не должен ронять весь API:
+            // он встраивается в цепочку каждого запроса, поэтому исключение из
+            // его конструктора иначе гасит все маршруты сразу.
+            $this->platform->log('error', 'Промежуточный обработчик ' . $class . ' не создан: ' . $exception->getMessage());
+
+            return;
+        }
+
+        if (!$instance instanceof MiddlewareInterface) {
+            $this->platform->log('warning', 'Класс не реализует MiddlewareInterface: ' . $class);
+
+            return;
+        }
+
+        $this->addMiddleware($instance);
     }
 
     /**

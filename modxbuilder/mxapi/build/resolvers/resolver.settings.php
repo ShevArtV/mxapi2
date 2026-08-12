@@ -28,6 +28,7 @@ if ($transport->xpdo) {
         'mxapi.default_limit' => 'mxapi_limits',
         'mxapi.max_limit' => 'mxapi_limits',
         'mxapi.rate_limit_per_minute' => 'mxapi_limits',
+        'mxapi.cursor_secret' => 'mxapi_limits',
         'mxapi.log_reads' => 'mxapi_log',
         'mxapi.log_lifetime' => 'mxapi_log',
         'mxapi.debug' => 'mxapi_log',
@@ -49,6 +50,18 @@ if ($transport->xpdo) {
                 }
             }
 
+            // Ключ подписи курсоров: пакет привозит настройку пустой, значение
+            // рождается здесь и на каждой установке своё. Заполняем только
+            // пустую — иначе обновление пакета обесценивало бы курсоры,
+            // выданные работающим интеграциям, и их обходы начинались бы заново.
+            $keyed = 0;
+            /** @var modSystemSetting $secret */
+            $secret = $modx->getObject('modSystemSetting', ['key' => 'mxapi.cursor_secret']);
+            if ($secret && trim((string)$secret->get('value')) === '') {
+                $secret->set('value', bin2hex(random_bytes(32)));
+                $keyed = $secret->save() ? 1 : 0;
+            }
+
             $table = $modx->getTableName('modSystemSetting');
 
             // Провайдеры и промежуточные обработчики больше не задаются
@@ -64,8 +77,9 @@ if ($transport->xpdo) {
             // настроек через xPDO. В гриде это пустая строка без подписи.
             $orphans = $modx->exec("DELETE FROM {$table} WHERE namespace = 'mxapi' AND (`key` IS NULL OR `key` = '')");
 
-            if ($changed > 0 || $orphans > 0 || $obsolete > 0) {
+            if ($changed > 0 || $keyed > 0 || $orphans > 0 || $obsolete > 0) {
                 $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Настройки: областей обновлено ' . $changed
+                    . ', ключей подписи создано ' . $keyed
                     . ', удалено устаревших ' . (int)$obsolete
                     . ', без ключа ' . (int)$orphans . '.');
                 $modx->getCacheManager()->refresh(['system_settings' => []]);

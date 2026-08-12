@@ -10,6 +10,8 @@ namespace MxApi\Core\Http;
  *
  * Тело может быть массивом либо генератором строк (см. stream()): выгрузка на
  * десятки мегабайт отдаётся по строке, а не собирается в памяти целиком.
+ *
+ * @api Вызывается провайдерами.
  */
 class Response
 {
@@ -87,6 +89,24 @@ class Response
     }
 
     /**
+     * Ответ «не изменилось»: тела нет, клиент берёт свою копию.
+     *
+     * Cache-Control приватный: ответы API привязаны к токену, и общий кэш
+     * (прокси, CDN) хранить их не должен — а вот клиенту хранить свою копию
+     * можно, ради этого механизм и заводится.
+     *
+     * @param string $etag Метка в готовом для заголовка виде.
+     * @return self
+     */
+    public static function notModified($etag)
+    {
+        return new self(304, [
+            'ETag' => $etag,
+            'Cache-Control' => 'private, no-cache',
+        ]);
+    }
+
+    /**
      * Потоковый ответ: колбэк сам печатает тело.
      *
      * @param callable $streamer
@@ -131,6 +151,21 @@ class Response
     }
 
     /**
+     * @param string $name Имя заголовка; регистр не важен, как и в самом HTTP.
+     * @return bool
+     */
+    public function hasHeader($name)
+    {
+        foreach (array_keys($this->headers) as $existing) {
+            if (strcasecmp($existing, $name) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array|null Тело для не-потокового ответа; для потокового — null.
      */
     public function getPayload()
@@ -156,10 +191,22 @@ class Response
         if (!headers_sent()) {
             http_response_code($this->status);
             header('Content-Type: application/json; charset=utf-8');
-            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+            // Запрет кэширования — умолчание, а не закон: эндпоинт с меткой
+            // версии ставит свой Cache-Control, и затирать его здесь нельзя,
+            // иначе валидация по If-None-Match не заработает никогда.
+            if (!$this->hasHeader('Cache-Control')) {
+                header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            }
+
             foreach ($this->headers as $name => $value) {
                 header($name . ': ' . $value);
             }
+        }
+
+        // У 304 тела не бывает: клиент берёт своё.
+        if ($this->status === 304) {
+            return;
         }
 
         if ($this->streamer !== null) {

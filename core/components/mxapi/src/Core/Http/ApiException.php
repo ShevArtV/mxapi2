@@ -8,6 +8,8 @@ namespace MxApi\Core\Http;
  * Коды — часть публичного контракта: клиенты старого Sleep & Glow уже завязаны
  * на token_required / invalid_scope / invalid_parameter и т.д., менять их нельзя.
  * Поэтому здесь именованные конструкторы, а не свободные строки в местах вызова.
+ *
+ * @api Бросается провайдерами через фабричные методы.
  */
 class ApiException extends \Exception
 {

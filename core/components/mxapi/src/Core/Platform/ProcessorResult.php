@@ -7,6 +7,8 @@ namespace MxApi\Core\Platform;
  *
  * Процессоры MODX 2 и MODX 3 возвращают разное (modProcessorResponse против
  * namespaced-ответа), поэтому наружу отдаём унифицированную структуру.
+ *
+ * @api Возвращается PlatformInterface::runProcessor().
  */
 class ProcessorResult
 {

@@ -4,6 +4,8 @@ namespace MxApi\Core\Auth;
 
 /**
  * Хранилище токенов. Реализация платформо-зависима (xPDO на MODX 2/3).
+ *
+ * @internal Реализуется адаптером платформы, не провайдером.
  */
 interface TokenRepositoryInterface
 {

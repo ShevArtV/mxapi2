@@ -9,6 +9,7 @@ use MxApi\Core\Http\Request;
 use MxApi\Core\Http\Response;
 use MxApi\Core\Kernel;
 use MxApi\Core\Maintenance\MaintenanceService;
+use MxApi\Core\Middleware\MiddlewareInterface;
 use MxApi\Core\Platform\PlatformUser;
 use MxApi\Endpoint\Auth\TokenEndpoint;
 use MxApi\Tests\Fake\FakePlatform;
@@ -25,6 +26,7 @@ class MiddlewareTest extends TestCase
     protected function setUp(): void
     {
         CounterEndpoint::$calls = 0;
+        TraceMiddleware::$trace = [];
         $this->platform = new FakePlatform();
         $this->platform->users = [new PlatformUser(2, 'manager', false, true, false)];
         $this->platform->passwords = ['manager' => 'secret'];
@@ -119,6 +121,73 @@ class MiddlewareTest extends TestCase
         $this->assertSame(2, $second->getPayload()['data']['calls']);
     }
 
+    public function testMiddlewareFromEventIsRegistered()
+    {
+        // Пакет привозит свой обработчик плагином — правки конфигурации сайта
+        // при этом не требуется.
+        $this->platform->eventResults['mxApiOnRegisterMiddleware'] = [PackageTraceMiddleware::class];
+
+        $kernel = $this->boot([]);
+        $token = $this->issueToken($kernel);
+        $this->assertSame(200, $this->call($kernel, $token)->getStatus());
+
+        $this->assertSame(['package'], TraceMiddleware::$trace);
+    }
+
+    public function testEventAcceptsObjectAndList()
+    {
+        $this->platform->eventResults['mxApiOnRegisterMiddleware'] = [
+            [new PackageTraceMiddleware(), SiteTraceMiddleware::class],
+        ];
+
+        $kernel = $this->boot([]);
+        $token = $this->issueToken($kernel);
+        $this->call($kernel, $token);
+
+        $this->assertSame(['package', 'site'], TraceMiddleware::$trace);
+    }
+
+    public function testPackageMiddlewareRunsBeforeSiteMiddleware()
+    {
+        // Обработчик сайта — последний рубеж перед эндпоинтом: владелец сайта
+        // должен иметь возможность встать после всех пакетов.
+        $this->platform->eventResults['mxApiOnRegisterMiddleware'] = [PackageTraceMiddleware::class];
+
+        $kernel = $this->boot(['middleware' => [SiteTraceMiddleware::class]]);
+        $token = $this->issueToken($kernel);
+        $this->call($kernel, $token);
+
+        $this->assertSame(['package', 'site'], TraceMiddleware::$trace);
+    }
+
+    public function testBrokenMiddlewareDoesNotBreakApi()
+    {
+        // Обработчик встраивается в цепочку каждого запроса, поэтому сломанный
+        // сторонний пакет иначе погасил бы сразу все маршруты.
+        $this->platform->eventResults['mxApiOnRegisterMiddleware'] = [
+            BrokenMiddleware::class,
+            PackageTraceMiddleware::class,
+        ];
+
+        $kernel = $this->boot([]);
+        $token = $this->issueToken($kernel);
+
+        $this->assertSame(200, $this->call($kernel, $token)->getStatus());
+        $this->assertSame(['package'], TraceMiddleware::$trace, 'Исправный обработчик обязан остаться в цепочке');
+        $this->assertNotEmpty($this->errorLogs(), 'Отказ должен попасть в журнал, а не пройти молча');
+    }
+
+    public function testNotAMiddlewareClassIsRejected()
+    {
+        $this->platform->eventResults['mxApiOnRegisterMiddleware'] = [\stdClass::class, 'MxApi\\Tests\\NoSuchMiddleware'];
+
+        $kernel = $this->boot([]);
+        $token = $this->issueToken($kernel);
+
+        $this->assertSame(200, $this->call($kernel, $token)->getStatus());
+        $this->assertCount(2, $this->warningLogs());
+    }
+
     public function testMaintenanceRunsOncePerInterval()
     {
         $service = new MaintenanceService($this->platform, new Config(['log_lifetime' => 100]));
@@ -171,6 +240,10 @@ class MiddlewareTest extends TestCase
 
         $this->assertSame(200, $response->getStatus(), json_encode($response->getPayload()));
 
+        // Выдача токена идёт через ту же цепочку обработчиков, поэтому след
+        // очищается здесь: тестам интересен только целевой вызов.
+        TraceMiddleware::$trace = [];
+
         return $response->getPayload()['data']['access_token'];
     }
 
@@ -179,6 +252,82 @@ class MiddlewareTest extends TestCase
         $headers['authorization'] = 'Bearer ' . $token;
 
         return $kernel->handle(new Request('POST', '/demo/counter', [], [], $headers, '127.0.0.1'));
+    }
+
+    /**
+     * @return array
+     */
+    private function errorLogs()
+    {
+        return array_values(array_filter($this->platform->logs, function (array $entry) {
+            return $entry['level'] === 'error';
+        }));
+    }
+
+    /**
+     * @return array
+     */
+    private function warningLogs()
+    {
+        return array_values(array_filter($this->platform->logs, function (array $entry) {
+            return $entry['level'] === 'warning';
+        }));
+    }
+}
+
+/**
+ * Отмечается в общем следе — по нему видно и факт регистрации, и порядок.
+ */
+abstract class TraceMiddleware implements MiddlewareInterface
+{
+    /** @var string[] Сбрасывается в setUp: след общий на весь процесс тестов. */
+    public static $trace = [];
+
+    /**
+     * @return string
+     */
+    abstract protected function mark();
+
+    public function process(Request $request, EndpointContext $context, callable $next)
+    {
+        self::$trace[] = $this->mark();
+
+        return $next($request);
+    }
+}
+
+/** Обработчик, зарегистрированный пакетом на событии. */
+class PackageTraceMiddleware extends TraceMiddleware
+{
+    protected function mark()
+    {
+        return 'package';
+    }
+}
+
+/** Обработчик, объявленный в core/config/mxapi.php конкретного сайта. */
+class SiteTraceMiddleware extends TraceMiddleware
+{
+    protected function mark()
+    {
+        return 'site';
+    }
+}
+
+/**
+ * Падает в конструкторе, причём ошибкой типов: именно \Error, а не \Exception,
+ * — та самая ловушка, из-за которой mxLogger уронил все маршруты сразу.
+ */
+class BrokenMiddleware implements MiddlewareInterface
+{
+    public function __construct()
+    {
+        throw new \TypeError('Обработчик собран неправильно');
+    }
+
+    public function process(Request $request, EndpointContext $context, callable $next)
+    {
+        return $next($request);
     }
 }
 

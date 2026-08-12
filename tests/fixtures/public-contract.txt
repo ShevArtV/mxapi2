@@ -1,0 +1,206 @@
+class MxApi\Core\Auth\AuthContext
+  public __construct(MxApi\Core\Platform\PlatformUser $user, ?MxApi\Core\Auth\TokenRecord $token = null, ?MxApi\Core\Auth\ClientRecord $client = null, $actor = '')
+  public getActor()
+  public getClient()
+  public getClientId()
+  public getToken()
+  public getUser()
+
+class MxApi\Core\Config
+  public __construct(array $values = [])
+  public get($key, $default = null)
+  public getBool($key)
+  public getInt($key)
+  public getList($key)
+  public toArray()
+
+class MxApi\Core\Endpoint\AbstractEndpoint
+  protected abstract describe()
+  protected cursorScope(array $params)
+  protected nextCursor(array $state, array $params, $config)
+  protected readCursor(array $params, $config)
+  protected readPaging(array $params, $config)
+  protected readParams(MxApi\Core\Http\Request $request)
+  public getMetadata()
+
+class MxApi\Core\Endpoint\EndpointContext
+  public __construct(MxApi\Core\Platform\PlatformInterface $platform, MxApi\Core\Config $config, ?MxApi\Core\Auth\AuthContext $auth = null, ?MxApi\Core\Endpoint\EndpointMetadata $metadata = null)
+  public getAuth()
+  public getConfig()
+  public getMetadata()
+  public getPlatform()
+
+interface MxApi\Core\Endpoint\EndpointInterface
+  public abstract getMetadata()
+  public abstract handle(MxApi\Core\Http\Request $request, MxApi\Core\Endpoint\EndpointContext $context)
+
+class MxApi\Core\Endpoint\EndpointMetadata
+  const CONTEXT_PUBLIC = 'public'
+  const CONTEXT_INTERNAL = 'internal'
+  const AUTH_NONE = 'none'
+  const AUTH_BEARER = 'bearer'
+  const CACHE_NO_STORE = 'no-store'
+  const CACHE_ETAG = 'etag'
+  const MODX_CONTEXT_FROM_REQUEST = 'request'
+  public __construct(array $spec)
+  public getAuth()
+  public getCache()
+  public getContext()
+  public getDescription()
+  public getExtra($key, $default = null)
+  public getId()
+  public getMethods()
+  public getModxContext()
+  public getParameters()
+  public getPath()
+  public getPermission()
+  public getProvider()
+  public getPublicPath()
+  public getScope()
+  public getTitle()
+  public isDeprecated()
+  public isPublic()
+  public isValidatable()
+  public isWrite()
+  public requiresAuth()
+  public takesContextFromRequest()
+  public toArray()
+  public toPublicArray()
+
+interface MxApi\Core\Endpoint\EtagAwareInterface
+  public abstract computeEtag(MxApi\Core\Http\Request $request, MxApi\Core\Endpoint\EndpointContext $context)
+
+class MxApi\Core\Endpoint\ParameterMetadata
+  const IN_QUERY = 'query'
+  const IN_PATH = 'path'
+  const IN_BODY = 'body'
+  const TYPE_STRING = 'string'
+  const TYPE_INTEGER = 'integer'
+  const TYPE_NUMBER = 'number'
+  const TYPE_BOOLEAN = 'boolean'
+  const TYPE_ARRAY = 'array'
+  const TYPE_OBJECT = 'object'
+  const TYPE_DATE = 'date'
+  public __construct(array $spec)
+  public extract(array $params)
+  public getDefault()
+  public getIn()
+  public getName()
+  public getType()
+  public isRequired()
+  public toArray()
+
+class MxApi\Core\Endpoint\ProcessorEndpoint
+  protected beforeRun(array $properties, MxApi\Core\Endpoint\EndpointContext $context)
+  protected buildProperties(MxApi\Core\Http\Request $request, MxApi\Core\Endpoint\EndpointContext $context)
+  protected extraMeta(array $payload)
+  protected formatResult(MxApi\Core\Platform\ProcessorResult $result, array $properties)
+  protected transformPayload(array $payload, MxApi\Core\Endpoint\EndpointContext $context)
+  public handle(MxApi\Core\Http\Request $request, MxApi\Core\Endpoint\EndpointContext $context)
+
+class MxApi\Core\Http\ApiException
+  public __construct($errorCode, $message, $status = 400, array $details = [])
+  public getDetails()
+  public getErrorCode()
+  public getStatus()
+  public static contextNotAllowed($context)
+  public static credentialsRequired()
+  public static insufficientPermission($permission)
+  public static insufficientScope($scope)
+  public static internalError($message = 'Внутренняя ошибка API.')
+  public static invalidCredentials()
+  public static invalidJson()
+  public static invalidParameter($parameter, $reason = '')
+  public static invalidScope($scope)
+  public static invalidToken()
+  public static ipNotAllowed($ip)
+  public static methodNotAllowed($route, $method, array $allowed = [])
+  public static missingParameter($parameter)
+  public static notFound($what)
+  public static rateLimited($limit)
+  public static routeNotFound($route, $method)
+  public static serviceDisabled()
+  public static tokenExpired()
+  public static tokenRequired()
+  public static tokenRevoked()
+  public static unknownContext($context)
+  public static userInactive($reason = 'Пользователь неактивен.')
+
+class MxApi\Core\Http\Request
+  public __construct($method, $path, array $query = [], array $body = [], array $headers = [], $ip = '')
+  public getBearerToken()
+  public getBody()
+  public getHeader($name, $default = '')
+  public getIp()
+  public getMethod()
+  public getParam($name, $default = null)
+  public getParams()
+  public getPath()
+  public getPathParams()
+  public getQuery()
+  public static fromGlobals($routePrefix = '', array $trustedProxies = [])
+  public withPathParams(array $params)
+
+class MxApi\Core\Http\Response
+  public getHeaders()
+  public getPayload()
+  public getStatus()
+  public hasHeader($name)
+  public isStream()
+  public send()
+  public static error($code, $message, $status = 400, array $details = [])
+  public static fromException(MxApi\Core\Http\ApiException $exception)
+  public static notModified($etag)
+  public static stream(callable $streamer, $status = 200)
+  public static success($data = null, array $meta = [], $status = 200)
+  public withHeader($name, $value)
+
+interface MxApi\Core\Middleware\MiddlewareInterface
+  public abstract process(MxApi\Core\Http\Request $request, MxApi\Core\Endpoint\EndpointContext $context, callable $next)
+
+interface MxApi\Core\Platform\PlatformInterface
+  public abstract cacheGet($key, array $options = [])
+  public abstract cacheSet($key, $value, $lifetime = 0, array $options = [])
+  public abstract checkPermission(MxApi\Core\Platform\PlatformUser $user, $permission)
+  public abstract findUserById($id)
+  public abstract findUserByUsername($username)
+  public abstract getClientRepository()
+  public abstract getContextKey()
+  public abstract getLogRepository()
+  public abstract getOption($key, $default = null)
+  public abstract getTokenRepository()
+  public abstract invokeEvent($event, array $params = [])
+  public abstract log($level, $message, array $context = [])
+  public abstract now()
+  public abstract runProcessor($processor, array $properties = [], array $options = [])
+  public abstract setRuntimeUser(MxApi\Core\Platform\PlatformUser $user)
+  public abstract useContext($key)
+  public abstract verifyPassword(MxApi\Core\Platform\PlatformUser $user, $password)
+
+class MxApi\Core\Platform\PlatformUser
+  public __construct($id, $username, $sudo = false, $active = true, $blocked = false)
+  public getId()
+  public getUsername()
+  public isActive()
+  public isBlocked()
+  public isSudo()
+  public isUsable()
+  public toArray()
+
+class MxApi\Core\Platform\ProcessorResult
+  public __construct($success, array $payload = [], $message = '', array $errors = [])
+  public getData()
+  public getErrors()
+  public getMessage()
+  public getObject()
+  public getPayload()
+  public getResults()
+  public getTotal()
+  public hasObject()
+  public isList()
+  public isSuccess()
+
+interface MxApi\Core\Provider\ProviderInterface
+  public abstract getEndpoints(MxApi\Core\Platform\PlatformInterface $platform, MxApi\Core\Config $config)
+  public abstract getId()
+  public abstract isAvailable(MxApi\Core\Platform\PlatformInterface $platform)

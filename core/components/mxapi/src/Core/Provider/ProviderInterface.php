@@ -13,6 +13,8 @@ use MxApi\Core\Platform\PlatformInterface;
  * core/config/mxapi.php. Системной настройки для этого нет: состав API не должен
  * зависеть от дампа базы.
  * Ядро mxApi при этом не знает ни про miniShop2, ни про конкретный проект.
+ *
+ * @api Реализуется провайдерами.
  */
 interface ProviderInterface
 {

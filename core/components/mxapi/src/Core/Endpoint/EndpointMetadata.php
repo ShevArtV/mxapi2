@@ -8,6 +8,8 @@ namespace MxApi\Core\Endpoint;
  * Единственный источник правды для роутера, каталога в админке и выгрузки
  * OpenAPI. Формат общий для mxapi2 и mxapi3 — документация и CMP на обеих
  * версиях MODX работают одинаково.
+ *
+ * @api Вызывается провайдерами; собирается ядром из describe().
  */
 class EndpointMetadata
 {
@@ -18,6 +20,11 @@ class EndpointMetadata
 
     const AUTH_NONE = 'none';
     const AUTH_BEARER = 'bearer';
+
+    /** Ответ не кэшируется и не валидируется — значение по умолчанию. */
+    const CACHE_NO_STORE = 'no-store';
+    /** Ответ снабжается меткой ETag, повтор с If-None-Match получает 304. */
+    const CACHE_ETAG = 'etag';
 
     /**
      * Контекст MODX берётся из запроса (заголовок X-MxApi-Context или параметр
@@ -60,6 +67,11 @@ class EndpointMetadata
             // строка — «безразличен, выполняется в текущем».
             'modx_context' => '',
             'auth' => self::AUTH_BEARER,
+            // Кэшируемость — часть публичного контракта: клиент обязан видеть в
+            // каталоге и OpenAPI, можно ли по этому маршруту слать
+            // If-None-Match. Умолчание строгое: приватных эндпоинтов
+            // большинство, и включаться кэш должен осознанно.
+            'cache' => self::CACHE_NO_STORE,
             'write' => false,
             'deprecated' => false,
             'parameters' => [],
@@ -202,6 +214,22 @@ class EndpointMetadata
     public function requiresAuth()
     {
         return $this->spec['auth'] !== self::AUTH_NONE;
+    }
+
+    /**
+     * @return string Режим кэширования: CACHE_NO_STORE или CACHE_ETAG.
+     */
+    public function getCache()
+    {
+        return (string)$this->spec['cache'];
+    }
+
+    /**
+     * @return bool Отдаётся ли ответ с меткой версии и понимает ли If-None-Match.
+     */
+    public function isValidatable()
+    {
+        return $this->getCache() === self::CACHE_ETAG;
     }
 
     /**

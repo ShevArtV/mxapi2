@@ -57,6 +57,7 @@ class Bootstrap
             'default_limit' => (int)$modx->getOption('mxapi.default_limit', null, 100),
             'max_limit' => (int)$modx->getOption('mxapi.max_limit', null, 1000),
             'rate_limit_per_minute' => (int)$modx->getOption('mxapi.rate_limit_per_minute', null, 120),
+            'cursor_secret' => (string)$modx->getOption('mxapi.cursor_secret', null, ''),
             'trusted_proxies' => $modx->getOption('mxapi.trusted_proxies', null, ''),
             'catalog_filter' => $modx->getOption('mxapi.catalog_filter', null, 'all'),
             'log_reads' => (bool)$modx->getOption('mxapi.log_reads', null, false),

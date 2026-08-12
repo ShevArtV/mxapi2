@@ -55,6 +55,9 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     /** @var array */
     public $events = [];
 
+    /** @var array Что «вернули обработчики плагина»: имя события => список значений. */
+    public $eventResults = [];
+
     /** @var PlatformUser|null */
     public $runtimeUser;
 
@@ -184,7 +187,7 @@ class FakePlatform implements PlatformInterface, TokenRepositoryInterface, Clien
     {
         $this->events[] = ['event' => $event, 'params' => $params];
 
-        return [];
+        return isset($this->eventResults[$event]) ? $this->eventResults[$event] : [];
     }
 
     public function cacheGet($key, array $options = [])

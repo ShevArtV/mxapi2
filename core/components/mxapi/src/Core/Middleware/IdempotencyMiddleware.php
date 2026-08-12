@@ -15,6 +15,8 @@ use MxApi\Core\Http\Response;
  * ответ первого успешного вызова, а не выполняет операцию второй раз.
  *
  * Применяется только к изменяющим эндпоинтам: у чтения повтор безопасен и так.
+ *
+ * @internal Встроенный обработчик ядра.
  */
 class IdempotencyMiddleware implements MiddlewareInterface
 {

@@ -7,6 +7,8 @@ namespace MxApi\Core\Auth;
  *
  * Логика перенесена из msOrderTranslator (проверена в бою на связке stage→prod)
  * и обобщена: поддерживаются IPv4 и IPv6.
+ *
+ * @internal
  */
 class IpMatcher
 {

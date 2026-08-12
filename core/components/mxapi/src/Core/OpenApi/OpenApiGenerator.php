@@ -13,6 +13,8 @@ use MxApi\Core\Registry\EndpointRegistry;
  * Статический YAML в репозитории источником правды быть не может: он неизбежно
  * разъедется с кодом. Здесь описание собирается из тех же метаданных, что
  * задают маршрутизацию и права, поэтому расходиться нечему.
+ *
+ * @internal
  */
 class OpenApiGenerator
 {
@@ -226,6 +228,18 @@ class OpenApiGenerator
             '400' => $this->errorResponse('Некорректный запрос.'),
         ];
 
+        if ($metadata->isValidatable()) {
+            // Недокументированный 304 клиент разберёт как отказ: пустое тело
+            // там, где по спецификации обещан конверт success/data.
+            $responses['200']['headers']['ETag'] = [
+                'description' => 'Версия ответа. Передайте её в If-None-Match при следующем запросе.',
+                'schema' => ['type' => 'string'],
+            ];
+            $responses['304'] = [
+                'description' => 'Данные не изменились с указанной в If-None-Match версии. Тела нет.',
+            ];
+        }
+
         if ($metadata->requiresAuth()) {
             $responses['401'] = $this->errorResponse('Токен отсутствует, истёк или отозван.');
             $responses['403'] = $this->errorResponse('Недостаточно прав или scope.');
@@ -262,7 +276,24 @@ class OpenApiGenerator
                 'type' => 'object',
                 'properties' => [
                     'success' => ['type' => 'boolean', 'example' => true],
-                    'meta' => ['type' => 'object'],
+                    // Состав meta задаёт эндпоинт; общими объявлены только поля
+                    // курсорного обхода — по ним клиент решает, идти ли за
+                    // следующей страницей, и это соглашение одно на весь API.
+                    'meta' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'has_more' => [
+                                'type' => 'boolean',
+                                'description' => 'Есть ли следующая страница.',
+                            ],
+                            'next_cursor' => [
+                                'type' => 'string',
+                                'description' => 'Курсор следующей страницы: передайте его как есть в параметре'
+                                    . ' cursor. Содержимое непрозрачно и подписано; отсутствует на последней'
+                                    . ' странице.',
+                            ],
+                        ],
+                    ],
                     'data' => ['description' => 'Полезная нагрузка ответа.'],
                 ],
                 'required' => ['success'],

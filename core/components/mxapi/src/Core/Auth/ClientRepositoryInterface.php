@@ -4,6 +4,8 @@ namespace MxApi\Core\Auth;
 
 /**
  * Хранилище клиентов интеграций.
+ *
+ * @internal Реализуется адаптером платформы, не провайдером.
  */
 interface ClientRepositoryInterface
 {
