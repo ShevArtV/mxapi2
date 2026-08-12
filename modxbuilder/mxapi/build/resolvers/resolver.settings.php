@@ -54,10 +54,26 @@ if ($transport->xpdo) {
             // рождается здесь и на каждой установке своё. Заполняем только
             // пустую — иначе обновление пакета обесценивало бы курсоры,
             // выданные работающим интеграциям, и их обходы начинались бы заново.
+            //
+            // Настройку резолвер при необходимости создаёт сам: vehicle категории,
+            // к которому он прикреплён, кладётся в пакет раньше vehicle'ов
+            // настроек, поэтому на установке, где ключ появляется впервые, строки
+            // в базе ещё нет. Созданное здесь значение переживёт свой vehicle —
+            // настройки едут с UPDATE_OBJECT = false.
             $keyed = 0;
             /** @var modSystemSetting $secret */
             $secret = $modx->getObject('modSystemSetting', ['key' => 'mxapi.cursor_secret']);
-            if ($secret && trim((string)$secret->get('value')) === '') {
+            if (!$secret) {
+                $secret = $modx->newObject('modSystemSetting');
+                $secret->fromArray([
+                    'key' => 'mxapi.cursor_secret',
+                    'xtype' => 'textfield',
+                    'namespace' => 'mxapi',
+                    'area' => 'mxapi_limits',
+                    'editedon' => null,
+                ], '', true, true);
+            }
+            if (trim((string)$secret->get('value')) === '') {
                 $secret->set('value', bin2hex(random_bytes(32)));
                 $keyed = $secret->save() ? 1 : 0;
             }
