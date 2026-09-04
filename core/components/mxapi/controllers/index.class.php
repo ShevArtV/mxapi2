@@ -29,9 +29,15 @@ class mxApiIndexManagerController extends modExtraManagerController
         return ['mxapi:default'];
     }
 
+    /**
+     * Право пакета, а не общее `settings`: иначе CMP открыт любому
+     * администратору и правами mxApi не управляется. Базовый
+     * modExtraManagerController::checkPermissions() в ядре — это `return true;`,
+     * поэтому метод обязан быть переопределён явно.
+     */
     public function checkPermissions()
     {
-        return $this->modx->hasPermission('settings');
+        return $this->modx->hasPermission('mxapi_view');
     }
 
     public function getPageTitle()

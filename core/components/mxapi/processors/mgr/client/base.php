@@ -6,16 +6,25 @@
  * процессор по имени файла, и base.class.php был бы вызываемым «процессором»
  * с абстрактным классом внутри.
  *
- * Право `save_user` выбрано не случайно: кто может править учётку, тот и так
- * может сменить ей пароль и выпустить токен грантом password. Отдельное
- * namespace-право дало бы иллюзию защиты и грабли с authority ролей, ничего
- * при этом не закрывая.
+ * Проверяются ДВА права, и оба обязательны.
+ *
+ * `mxapi_clients` — право пакета: управление клиентами это выпуск ключей
+ * доступа к API, и оно не должно доставаться вместе с просмотром каталога
+ * (`mxapi_view`).
+ *
+ * `save_user` остаётся рядом: клиент выпускает токен, действующий ОТ ИМЕНИ
+ * выбранного пользователя. Кто может править учётку, тот и так может сменить
+ * ей пароль и выпустить токен грантом password; без этой проверки
+ * `mxapi_clients` стало бы способом поднять себе привилегии до чужих.
  */
 
 abstract class mxApiClientBaseProcessor extends modProcessor
 {
+    /** @var string Право пакета: управление клиентами = выпуск ключей доступа. */
+    public $permission = 'mxapi_clients';
+
     /** @var string Право менеджера: выдача кредов равносильна правке учётки. */
-    public $permission = 'save_user';
+    public $userPermission = 'save_user';
 
     /** @var modUser Пользователь, которому принадлежат клиенты. */
     protected $user;
@@ -31,7 +40,11 @@ abstract class mxApiClientBaseProcessor extends modProcessor
      */
     public function initialize()
     {
-        if (!$this->modx->hasPermission($this->permission)) {
+        // Явная проверка обязательна: modProcessor::checkPermissions() в ядре
+        // возвращает true, а поле $permission читает только modObjectProcessor —
+        // на одном свойстве процессор остался бы открытым.
+        if (!$this->modx->hasPermission($this->permission)
+            || !$this->modx->hasPermission($this->userPermission)) {
             return $this->modx->lexicon('access_denied');
         }
 

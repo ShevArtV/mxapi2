@@ -6,8 +6,8 @@
  */
 class mxApiOpenApiGetProcessor extends modProcessor
 {
-    /** @var string */
-    public $permission = 'settings';
+    /** @var string Право пакета: та же спецификация, что видна в каталоге CMP. */
+    public $permission = 'mxapi_view';
 
     public function initialize()
     {

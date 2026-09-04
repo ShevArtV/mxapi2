@@ -22,7 +22,7 @@ $menu->fromArray([
     'handler'     => '',
     'namespace'   => $namespace,
     'action'      => 'index',
-    'permissions' => '',
+    'permissions' => 'mxapi_view',
 ], '', true, true);
 
 $menus[] = $menu;

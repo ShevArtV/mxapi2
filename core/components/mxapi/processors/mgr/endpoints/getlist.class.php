@@ -11,8 +11,8 @@
  */
 class mxApiEndpointGetListProcessor extends modProcessor
 {
-    /** @var string Право менеджера: каталог доступен тем, кто и так видит настройки. */
-    public $permission = 'settings';
+    /** @var string Право пакета: просмотр каталога эндпоинтов в админке. */
+    public $permission = 'mxapi_view';
 
     public function initialize()
     {
