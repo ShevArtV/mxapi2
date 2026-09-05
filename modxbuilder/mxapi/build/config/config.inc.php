@@ -31,7 +31,7 @@ $buildConfig = [
     "real_package_name" => "mxApi",
     //name for folder
     "package_name" => "mxapi",
-    "package_version" => "1.2.0",
+    "package_version" => "1.2.1",
     "package_release" => "pl",
     "package_table_prefix" => "mxapi_",
     "package_class_prefix" => "mxapi",
