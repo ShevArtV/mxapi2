@@ -3,18 +3,23 @@
  * PHP-резолвер mxApi: политики доступа.
  *
  * Создаёт (идемпотентно):
- *   - шаблон политики mxapiTemplate;
- *   - права API-слоя: load + mxapi_<endpoint> для встроенных эндпоинтов;
- *   - права слоя админки: mxapi_view, mxapi_clients;
+ *   - шаблон mxapiTemplate (группа Namespace) и в нём права API-слоя:
+ *     load + mxapi_<endpoint> для встроенных эндпоинтов;
+ *   - шаблон mxapiManagerTemplate (группа Admin) и в нём права админки:
+ *     mxapi_view, mxapi_clients;
  *   - политику mxapiDefault — доступ к эндпоинтам API (назначается на namespace);
  *   - политику mxapiManager — доступ к CMP (назначается на контекст mgr);
  *   - ACL-запись modAccessContext: Administrator → mgr → mxapiManager.
  *
  * ⚠️ Два слоя прав живут в РАЗНЫХ политиках намеренно. mxapiDefault выдают
  * интеграции для доступа к эндпоинтам; если досыпать в неё админские права,
- * выдача API-доступа заодно открывала бы админку. Шаблон при этом общий: в MODX
- * право обязано принадлежать шаблону политики, а разводить ещё и шаблоны значит
- * дублировать список прав.
+ * выдача API-доступа заодно открывала бы админку.
+ *
+ * ⚠️ Шаблоны у слоёв тоже разные, и не ради порядка. Окно выдачи прав MODX
+ * показывает только политики, чей шаблон в «своей» группе шаблонов: namespace —
+ * группа Namespace, контекст — группа Admin. Группа — свойство шаблона, поэтому
+ * на общем шаблоне одна из двух политик всегда пропадала из своего окна
+ * (1.2.0–1.2.1: mxapiDefault не выбиралась в Namespace Access).
  *
  * ⚠️ Право `load` обязано быть и в шаблоне, и в политике API. Проверка прав идёт
  * через modNamespace (наследует modAccessibleObject), и MODX при загрузке
@@ -34,7 +39,7 @@
  * переименовываются и исчезают, а привязка к ним даёт молчаливый пропуск выдачи
  * (sleepandglow 05.09.2026: `Developers` переименована в `Dev`).
  *
- * ⚠️ Инвариант: шаблон, права и политики создаются БЕЗУСЛОВНО, отдельно от
+ * ⚠️ Инвариант: шаблоны, права и политики создаются БЕЗУСЛОВНО, отдельно от
  * выдачи ACL группам. Исход поиска группы не должен влиять на то, появится ли
  * политика в базе, — иначе сайт остаётся вовсе без политик пакета.
  *
@@ -69,44 +74,102 @@ if ($transport->xpdo) {
     switch ($options[xPDOTransport::PACKAGE_ACTION]) {
         case xPDOTransport::ACTION_INSTALL:
         case xPDOTransport::ACTION_UPGRADE:
-            /** @var modAccessPolicyTemplate $template */
-            $template = $modx->getObject('modAccessPolicyTemplate', ['name' => 'mxapiTemplate']);
-            if (!$template) {
-                $template = $modx->newObject('modAccessPolicyTemplate');
-                $template->fromArray([
-                    'template_group' => 1,
-                    'name' => 'mxapiTemplate',
-                    'description' => 'Права эндпоинтов и админки mxApi',
-                    'lexicon' => 'permissions',
-                ], '', true, true);
-                if (!$template->save()) {
-                    $modx->log(modX::LOG_LEVEL_ERROR, '[mxapi] Не удалось создать шаблон политики mxapiTemplate.');
-                    return true;
+            /**
+             * Заводит шаблон политики в нужной группе шаблонов или переводит в
+             * неё существующий. Группа ищется по имени, а не по id: id штатных
+             * групп на сайте не гарантирован.
+             *
+             * @return int id шаблона, 0 — не удалось создать
+             */
+            $ensureTemplate = function ($name, $groupName, $description, array $permissions) use ($modx) {
+                /** @var modAccessPolicyTemplateGroup $group */
+                $group = $modx->getObject('modAccessPolicyTemplateGroup', ['name' => $groupName]);
+                if ($group) {
+                    $groupId = (int)$group->get('id');
+                } else {
+                    // Нестандартный сайт: без группы шаблон не сохранить, а
+                    // политика в группе Admin хотя бы существует и выдаётся.
+                    $groupId = 1;
+                    $modx->log(modX::LOG_LEVEL_WARN, '[mxapi] Нет группы шаблонов ' . $groupName . ': шаблон ' . $name . ' остаётся в группе с id 1, в окне выдачи прав политика может быть не видна.');
                 }
-                $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Создан шаблон политики mxapiTemplate.');
+
+                /** @var modAccessPolicyTemplate $template */
+                $template = $modx->getObject('modAccessPolicyTemplate', ['name' => $name]);
+                if (!$template) {
+                    $template = $modx->newObject('modAccessPolicyTemplate');
+                    $template->fromArray([
+                        'template_group' => $groupId,
+                        'name' => $name,
+                        'description' => $description,
+                        'lexicon' => 'permissions',
+                    ], '', true, true);
+                    if (!$template->save()) {
+                        $modx->log(modX::LOG_LEVEL_ERROR, '[mxapi] Не удалось создать шаблон политики ' . $name . '.');
+
+                        return 0;
+                    }
+                    $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Создан шаблон политики ' . $name . '.');
+                } elseif ((int)$template->get('template_group') !== $groupId) {
+                    $template->set('template_group', $groupId);
+                    $template->save();
+                    $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Шаблон ' . $name . ' переведён в группу ' . $groupName . '.');
+                }
+
+                $templateId = (int)$template->get('id');
+
+                foreach ($permissions as $permissionName => $permissionDescription) {
+                    $exists = $modx->getObject('modAccessPermission', [
+                        'template' => $templateId,
+                        'name' => $permissionName,
+                    ]);
+                    if ($exists) {
+                        continue;
+                    }
+
+                    /** @var modAccessPermission $permission */
+                    $permission = $modx->newObject('modAccessPermission');
+                    $permission->fromArray([
+                        'template' => $templateId,
+                        'name' => $permissionName,
+                        'description' => $permissionDescription,
+                        'value' => 1,
+                    ], '', true, true);
+                    $permission->save();
+                    $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Добавлено право ' . $permissionName . ' в шаблон ' . $name . '.');
+                }
+
+                return $templateId;
+            };
+
+            // Имя mxapiTemplate не менять: в него дописывают права эндпоинтов
+            // пакеты-провайдеры (msOrderTranslator ищет шаблон по имени).
+            $apiTemplateId = $ensureTemplate(
+                'mxapiTemplate',
+                'Namespace',
+                'Права эндпоинтов mxApi (политики выдаются на namespace mxapi)',
+                $apiPermissions
+            );
+            $managerTemplateId = $ensureTemplate(
+                'mxapiManagerTemplate',
+                'Admin',
+                'Права админки mxApi (политики выдаются на контекст mgr)',
+                $mgrPermissions
+            );
+            if (!$apiTemplateId || !$managerTemplateId) {
+                return true;
             }
 
-            $templateId = (int)$template->get('id');
-
-            foreach (array_merge($apiPermissions, $mgrPermissions) as $name => $description) {
-                $exists = $modx->getObject('modAccessPermission', [
-                    'template' => $templateId,
-                    'name' => $name,
+            // В 1.2.0–1.2.1 права админки жили в mxapiTemplate. Там они больше
+            // ничего не дают, а в списке прав namespace-политики вводили бы в
+            // заблуждение.
+            foreach (array_keys($mgrPermissions) as $permissionName) {
+                $stale = $modx->getObject('modAccessPermission', [
+                    'template' => $apiTemplateId,
+                    'name' => $permissionName,
                 ]);
-                if ($exists) {
-                    continue;
+                if ($stale && $stale->remove()) {
+                    $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Право ' . $permissionName . ' убрано из шаблона mxapiTemplate.');
                 }
-
-                /** @var modAccessPermission $permission */
-                $permission = $modx->newObject('modAccessPermission');
-                $permission->fromArray([
-                    'template' => $templateId,
-                    'name' => $name,
-                    'description' => $description,
-                    'value' => 1,
-                ], '', true, true);
-                $permission->save();
-                $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Добавлено право: ' . $name);
             }
 
             /**
@@ -114,8 +177,9 @@ if ($transport->xpdo) {
              *
              * На апгрейде существующая политика НЕ перезаписывается: то, что
              * администратор осознанно выключил, должно таким и остаться.
+             * Меняется только шаблон, если политика стоит не на своём.
              */
-            $ensurePolicy = function ($name, $description, array $permissions) use ($modx, $templateId) {
+            $ensurePolicy = function ($name, $description, $templateId, array $permissions) use ($modx) {
                 $data = [];
                 foreach (array_keys($permissions) as $permissionName) {
                     $data[$permissionName] = true;
@@ -158,8 +222,15 @@ if ($transport->xpdo) {
                 }
                 if ($changed) {
                     $policy->set('data', $current);
-                    $policy->save();
                     $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Политика ' . $name . ' дополнена новыми правами.');
+                }
+                if ((int)$policy->get('template') !== (int)$templateId) {
+                    $policy->set('template', $templateId);
+                    $changed = true;
+                    $modx->log(modX::LOG_LEVEL_INFO, '[mxapi] Политика ' . $name . ' переведена на свой шаблон.');
+                }
+                if ($changed) {
+                    $policy->save();
                 }
 
                 return $policy;
@@ -168,19 +239,22 @@ if ($transport->xpdo) {
             $ensurePolicy(
                 'mxapiDefault',
                 'Полный доступ к встроенным эндпоинтам mxApi (выдаётся на namespace mxapi).',
+                $apiTemplateId,
                 $apiPermissions
             );
 
             $managerPolicy = $ensurePolicy(
                 'mxapiManager',
                 'Доступ к админке mxApi: каталог эндпоинтов и управление клиентами (выдаётся на контекст mgr).',
+                $managerTemplateId,
                 $mgrPermissions
             );
 
             // Назначение админской политики группе администраторов. Без него
             // пакет закрыл бы CMP от всех, включая тех, кто его ставил: права
-            // mxapi_* объявлены в mxapiTemplate, а политика Administrator живёт
-            // на AdministratorTemplate — чужое право туда не положить.
+            // mxapi_view и mxapi_clients объявлены в mxapiManagerTemplate, а
+            // политика Administrator живёт на AdministratorTemplate — чужое
+            // право туда не положить.
             // Работает потому, что modAccessibleObject::checkPolicy() перебирает
             // ВСЕ ACL-записи пользователя на цель и возвращает true на первом
             // совпадении: политики на один контекст складываются.

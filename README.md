@@ -181,8 +181,11 @@ RewriteRule ^mxapi/(.*)$ assets/components/mxapi/index.php [QSA,L]
 ## Права
 
 Проверка идёт штатным механизмом MODX по namespace `mxapi`. Пакет создаёт шаблон
-политики `mxapiTemplate`, права `mxapi_*` и политику `mxapiDefault`, но **не
-назначает** её группам — доступ выдаётся вручную через Access Controls.
+политики `mxapiTemplate` (группа шаблонов Namespace), права `mxapi_*` и политику
+`mxapiDefault`, но **не назначает** её группам — доступ выдаётся вручную через
+Access Controls. Права админки живут отдельно: шаблон `mxapiManagerTemplate`
+(группа Admin) и политика `mxapiManager` на контекст `mgr`, которую резолвер
+выдаёт группе Administrator.
 
 ⚠️ В любой политике для namespace `mxapi` обязано быть право `load`: MODX требует
 его при загрузке самого объекта namespace, до проверки прав эндпоинта. Без него

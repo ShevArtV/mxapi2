@@ -47,8 +47,10 @@ mxApi
 - таблицы modx_mxapi_client, modx_mxapi_token, modx_mxapi_log (при удалении
   пакета НЕ дропаются: в них боевые учётки и аудит);
 - системные настройки mxapi.*;
-- шаблон политики mxapiTemplate и политика mxapiDefault (группам не назначаются
-  — это делается вручную, см. шаг 3);
+- шаблон политики mxapiTemplate и политика mxapiDefault — доступ к API
+  (группам не назначаются — это делается вручную, см. шаг 3);
+- шаблон политики mxapiManagerTemplate и политика mxapiManager — доступ к
+  админке (назначается группе Administrator на контекст mgr);
 - пункт меню «Компоненты → mxApi».
 
 
