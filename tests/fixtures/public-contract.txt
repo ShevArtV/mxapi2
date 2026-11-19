@@ -130,6 +130,7 @@ class MxApi\Core\Http\Request
   public __construct($method, $path, array $query = [], array $body = [], array $headers = [], $ip = '')
   public getBearerToken()
   public getBody()
+  public getBodyError()
   public getHeader($name, $default = '')
   public getIp()
   public getMethod()
@@ -139,6 +140,7 @@ class MxApi\Core\Http\Request
   public getPathParams()
   public getQuery()
   public static fromGlobals($routePrefix = '', array $trustedProxies = [])
+  public withBodyError(MxApi\Core\Http\ApiException $error)
   public withPathParams(array $params)
 
 class MxApi\Core\Http\Response

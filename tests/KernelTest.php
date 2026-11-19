@@ -75,6 +75,54 @@ class KernelTest extends TestCase
         $this->assertNotEmpty($this->platform->logs, 'Причина обязана уйти в лог.');
     }
 
+    /**
+     * Невалидный JSON: ошибку разбора Request::fromGlobals() откладывает, а
+     * Kernel отдаёт её в формате пакета и пишет в журнал. Раньше исключение
+     * вылетало до handle(): HTML Fatal со статусом 200 и без записи в журнале.
+     */
+    public function testInvalidJsonBodyReturns400AndIsLogged()
+    {
+        $request = $this->request('POST', '/auth/token')
+            ->withBodyError(\MxApi\Core\Http\ApiException::invalidJson());
+
+        $response = $this->kernel->handle($request);
+
+        $this->assertSame(400, $response->getStatus());
+        $this->assertSame('invalid_json', $this->errorCode($response));
+        $payload = $response->getPayload();
+        $this->assertFalse($payload['success']);
+
+        $this->assertCount(1, $this->platform->journal);
+        $row = $this->platform->journal[0];
+        $this->assertSame(400, $row['status']);
+        $this->assertSame('invalid_json', $row['error_code']);
+        $this->assertSame('', $row['endpoint']);
+    }
+
+    public function testRequestWithoutBodyErrorIsUnaffected()
+    {
+        $request = $this->request('GET', '/nope');
+        $this->assertNull($request->getBodyError());
+        $this->assertSame(404, $this->kernel->handle($request)->getStatus());
+    }
+
+    public function testFromGlobalsKeepsEmptyAndNonJsonBodiesWorking()
+    {
+        $server = $_SERVER;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['CONTENT_TYPE'] = 'application/json';
+        $_SERVER['REQUEST_URI'] = '/mxapi/v1/nope';
+        try {
+            // В CLI php://input пуст: пустое тело при JSON-типе — не ошибка.
+            $request = Request::fromGlobals('/mxapi/v1');
+        } finally {
+            $_SERVER = $server;
+        }
+
+        $this->assertNull($request->getBodyError());
+        $this->assertSame([], $request->getBody());
+    }
+
     public function testUnknownRouteReturns404()
     {
         $response = $this->kernel->handle($this->request('GET', '/nope'));

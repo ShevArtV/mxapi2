@@ -133,6 +133,13 @@ class Kernel
                 throw ApiException::serviceDisabled();
             }
 
+            // Тело разобрано ещё в Request::fromGlobals(), а ошибку оно отложило
+            // сюда: так 400 получает формат ответа пакета и запись в журнале.
+            // Событие mxApiOnBeforeRequest на таком запросе не вызывается.
+            if ($request->getBodyError()) {
+                throw $request->getBodyError();
+            }
+
             $this->platform->invokeEvent('mxApiOnBeforeRequest', [
                 'method' => $request->getMethod(),
                 'path' => $request->getPath(),

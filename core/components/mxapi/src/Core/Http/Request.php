@@ -32,6 +32,9 @@ class Request
     /** @var string */
     private $ip;
 
+    /** @var ApiException|null Ошибка разбора тела: ждёт, пока Kernel бросит её внутри своего try. */
+    private $bodyError;
+
     /** @var array Параметры, вынутые роутером из пути (/orders/{id}). */
     private $pathParams = [];
 
@@ -60,12 +63,20 @@ class Request
     {
         $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
         $headers = self::collectHeaders();
-        $body = self::parseBody($method, $headers);
+        $bodyError = null;
+        try {
+            $body = self::parseBody($method, $headers);
+        } catch (ApiException $exception) {
+            // Бросать здесь нельзя: fromGlobals() зовётся до Kernel::handle(), и
+            // исключение вылетело бы мимо формата ответа и журнала вызовов.
+            $body = [];
+            $bodyError = $exception;
+        }
 
         $query = $_GET;
         unset($query['route']);
 
-        return new self(
+        $request = new self(
             $method,
             self::resolvePath($routePrefix),
             $query,
@@ -73,6 +84,32 @@ class Request
             $headers,
             self::resolveIp($trustedProxies)
         );
+
+        return $bodyError ? $request->withBodyError($bodyError) : $request;
+    }
+
+    /**
+     * @internal Для Kernel: ошибка разбора тела, отложенная до его try.
+     *
+     * @return ApiException|null
+     */
+    public function getBodyError()
+    {
+        return $this->bodyError;
+    }
+
+    /**
+     * @internal Для fromGlobals() и тестов.
+     *
+     * @param ApiException $error
+     * @return self Новый экземпляр: запрос иммутабелен.
+     */
+    public function withBodyError(ApiException $error)
+    {
+        $clone = clone $this;
+        $clone->bodyError = $error;
+
+        return $clone;
     }
 
     /**
